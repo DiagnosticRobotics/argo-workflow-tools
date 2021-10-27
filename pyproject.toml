@@ -1,19 +1,16 @@
 [tool.poetry]
-name = "argo-workflow-tools "
+name = "argo-workflow-tools"
 version = "0.5.17"
-description = ""
+description = "A suite of tools to ease ML pipeline development with Argo Workflows"
 authors = ["Diagnostic Robotics"]
 license = "Apache 2.0"
+repository = "https://keik"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-py-str-case = "^0.0.4"
-PyYAML = "^5.3.1"
-python-dateutil = "^2.8.1"
-argo-workflows = "^5.0.0"
 urllib3 = "^1.26.7"
 certifi = "^2021.10.8"
-
+requests = "^2.26.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"

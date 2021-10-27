@@ -1,0 +1,13 @@
+[flake8]
+count = True
+show-source = True
+statistics = True
+max-complexity = 20
+per-file-ignores = __init__.py:F401
+exclude =
+    .git,
+    __pycache__
+ignore =
+    E505
+    E501
+    F401

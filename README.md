@@ -19,22 +19,25 @@ The simplest way to submit a new workflow is by running a workflow from template
 ``` python
 ARGO_CLIENT = 'http://localhost:2746'
 client = ArgoClient(ARGO_CLIENT, options=ArgoOptions(client_side_validation=False, namespace='argo'))
-result = client.submit_from_template('test-workflow', params={'message':'hello world'})
+result = client.submit('test-workflow', params={'message':'hello world'})
 result.wait_for_completion()
 ```
 
-You can wait for template completion by setting _wait=True_ parameter
+You can wait for template completion by setting _wait=True_ parameter, or calling wait_for_completion()
 ``` python
-ARGO_CLIENT = 'http://localhost:2746'
-client = ArgoClient(ARGO_CLIENT, options=ArgoOptions(client_side_validation=False, namespace='argo'))
-result = client.submit_from_template('test-workflow', params={'message':'hello world'}, wait=True)
+result = client.submit('test-workflow', params={'message':'hello world'}, wait=True)
 ```
 
-You send objects as parameters, and they will be serialized to json. 
+You may send parameters, through the params dictionary
+``` python
+result = client.submit('test-workflow', params={'message':'hello world'}, wait=True)
+```
+
+You send objects as parameters, and they will be automatically serialized to json. 
 ``` python
 ARGO_CLIENT = 'http://localhost:2746'
 client = ArgoClient(ARGO_CLIENT, options=ArgoOptions(client_side_validation=False, namespace='argo'))
-result = client.submit_from_template('test-workflow',
+result = client.submit('test-workflow',
                                      params={'name':
                                                 {'first':'Lorne','last':'Malvo'}
                                              },
@@ -57,6 +60,13 @@ pandas.read_csv(result.outputs['users'].path)
 You may cancel a running flow through the cancel method
 ``` python
 result.cancel()
+```
+You can may ssuspend, resume or cancel your workflow at any time 
+``` python
+result = client.submit('test-workflow', params={'message':'hello world'}, wait=False)
+result.suspend()
+...
+result.resume()
 ```
 You can retry a failing workflow through the retry method
 ``` python
