@@ -6,6 +6,9 @@ from .workflow_status_checker import WorkflowStatusChecker
 
 
 class WorkflowResult:
+    """
+
+    """
     @staticmethod
     def _get_outputs(outputs) -> dict[str, Union[str, Artifact]]:
         parameters = outputs.get("parameters")

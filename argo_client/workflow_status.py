@@ -2,10 +2,10 @@ from enum import Enum
 
 
 class WorkflowStatus(Enum):
-    Running = ("Running",)
-    Succeeded = ("Succeeded",)
-    Failed = ("Failed",)
-    Canceled = ("Canceled",)
+    Running = "Running"
+    Succeeded = "Succeeded"
+    Failed = "Failed"
+    Canceled = "Canceled"
     Suspended = "Suspended"
 
     @classmethod

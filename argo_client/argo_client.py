@@ -23,30 +23,32 @@ def _log_workflow_web_page_link(
 
 
 class ArgoClient:
+    """ Client to run an manage argo workflows 
+    """
     def __init__(self, argo_server_uri: str, options: ArgoOptions):
         self._argo_server_uri = argo_server_uri
         self._argo_http_client = ArgoHttpClient(argo_server_uri, options)
         self._options = options
 
-    def submit_from_template(
+    def submit(
         self,
         template_name: str,
         params: Dict[str, any] = None,
         namespace: str = None,
         annotations={},
-        wait: bool = True,
+        wait: bool = False,
     ) -> WorkflowResult:
-        """
-        :param template_name:
-        :param wait:
-        :param params:
-        :param namespace:
-        :param workflow_manifest: a dict of the workflow manifest or the path to the workflow yaml file
-        :return: the name (id) of the submitted workflow
+        """[summary]
 
         Args:
-            annotations:
-            annotations:
+            template_name (str): template 
+            params (Dict[str, any], optional): workflow parameters. Defaults to None.
+            namespace (str, optional): override the namespace to run the workflow. Defaults to None.
+            annotations (dict, optional): workflow annoteations. Defaults to {}.
+            wait (bool, optional): block program and wait for workflow to finish. Defaults to False.
+
+        Returns:
+            WorkflowResult: workflow status reference
         """
 
         if namespace is None:
@@ -65,8 +67,18 @@ class ArgoClient:
         return self._submit_workflow(namespace, body, wait)
 
     def create(
-        self, workflow: dict[str, any], namespace: str = None, wait: bool = True
+        self, workflow: dict[str, any], namespace: str = None, wait: bool = False
     ) -> WorkflowResult:
+        """[summary]
+
+        Args:
+            workflow (dict[str, any]): workflow manifest object
+            namespace (str, optional): namespace to run the workflow in. Defaults to None.
+            wait (bool, optional): block program and wait for workflow to finish.. Defaults to True.
+
+        Returns:
+            WorkflowResult: workflow status reference
+        """
         if namespace is None:
             namespace = self._options.namespace
 

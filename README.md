@@ -1,6 +1,6 @@
 # Argo Workflow Tools
-
 argo-workflow-tools is a set of tools intended to easue the usage of argo for data science and data engineerign workflows
+![Python Versions Supported](https://img.shields.io/badge/python-3.7+-blue.svg)
 
 ## Installation
 argo-workflow-tools is published to the Python Package Index (PyPI) under the name argo-workflow-tools. To install it, run:
@@ -10,7 +10,7 @@ pip install argo-workflow-tools
 ```
 
 ## Argo Submitter
-Argo Submitter is an easy to use argo client that allows data scientists to easily execute argo from code, and even interactive notebooks
+Argo Submitter is an easy to use argo client that allows data scientists to easily execute and control Argo Workflows from code and interactive notebooks.
 
 ### Quick Start
 
@@ -43,25 +43,31 @@ result = client.submit('test-workflow',
                                              },
                                      wait=True)
 ```
-
+#### Running workflows from specification
+if you have a custom workflow manifest , you can run it by using _create_
+``` python
+result = client.create(workflow_manifest, wait=True)
+```
 #### Working with workflow results
 You can check the status of a workflow by calling the status field
 ``` python
-print(result.status)
+result.status
 ```
 
 You can fetch output parametes and artifacts throut the output field
 ``` python
 print(result.outputs['message'])
-pandas.read_csv(result.outputs['users'].path)
 ```
-
+As well as reach artifacts through the s3 path property
+``` python
+pandas.read_csv(result.outputs['users'].s3)
+```
 #### Controlling workflows
 You may cancel a running flow through the cancel method
 ``` python
 result.cancel()
 ```
-You can may ssuspend, resume or cancel your workflow at any time 
+You may ssuspend, resume or cancel your workflow at any time 
 ``` python
 result = client.submit('test-workflow', params={'message':'hello world'}, wait=False)
 result.suspend()
