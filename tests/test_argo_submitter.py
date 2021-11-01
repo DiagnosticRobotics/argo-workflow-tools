@@ -1,6 +1,6 @@
 import pytest
 
-from argo_client import ArgoClient, ArgoOptions, WorkflowStatus, WorkflowNotFoundException
+from argo_workflow_tools import ArgoClient, ArgoOptions, WorkflowStatus, WorkflowNotFoundException
 
 ARGO_CLIENT = 'localhsot:2746'
 

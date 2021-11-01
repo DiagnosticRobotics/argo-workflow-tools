@@ -1,10 +1,12 @@
 [tool.poetry]
 name = "argo-workflow-tools"
-version = "0.5.17"
+version = "0.6.1"
 description = "A suite of tools to ease ML pipeline development with Argo Workflows"
 authors = ["Diagnostic Robotics"]
 license = "Apache 2.0"
-repository = "https://keik"
+repository = "https://github.com/DiagnosticRobotics/argo-workflow-tools"
+readme = "README.md"
+
 
 [tool.poetry.dependencies]
 python = "^3.7"
