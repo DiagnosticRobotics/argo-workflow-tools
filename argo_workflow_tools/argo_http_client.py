@@ -1,4 +1,5 @@
 from dataclasses import asdict, dataclass
+from typing import List
 
 import requests
 from requests.auth import AuthBase
@@ -33,7 +34,7 @@ class ArgoApiException(Exception):
 
 @dataclass
 class SubmitOptions:
-    parameters: list[str]
+    parameters: List[str]
     labels: str
 
 

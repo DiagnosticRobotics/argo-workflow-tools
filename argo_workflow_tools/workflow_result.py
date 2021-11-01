@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Dict
 
 from .artifact import Artifact
 from .workflow_status import WorkflowStatus
@@ -9,8 +9,9 @@ class WorkflowResult:
     """
 
     """
+
     @staticmethod
-    def _get_outputs(outputs) -> dict[str, Union[str, Artifact]]:
+    def _get_outputs(outputs) -> Dict[str, Union[str, Artifact]]:
         parameters = outputs.get("parameters")
         artifacts = outputs.get("artifacts")
         outputs = {}
@@ -24,10 +25,10 @@ class WorkflowResult:
         return outputs
 
     def __init__(
-        self,
-        workflow_name: str,
-        workflow_status: WorkflowStatus,
-        workflow_status_checker: WorkflowStatusChecker = None,
+            self,
+            workflow_name: str,
+            workflow_status: WorkflowStatus,
+            workflow_status_checker: WorkflowStatusChecker = None,
     ):
         self.workflow_name = workflow_name
         self.status = workflow_status
@@ -55,7 +56,7 @@ class WorkflowResult:
         return self.status
 
     def resume(
-        self,
+            self,
     ):
         self.workflow_status_checker.resume()
         self.status = WorkflowStatus.value_of(
@@ -64,7 +65,7 @@ class WorkflowResult:
         return self.status
 
     def suspend(
-        self,
+            self,
     ):
         self.workflow_status_checker.suspend()
         self.status = WorkflowStatus.value_of(
@@ -73,7 +74,7 @@ class WorkflowResult:
         return self.status
 
     @property
-    def outputs(self) -> dict[str, Union[str, Artifact]]:
+    def outputs(self) -> Dict[str, Union[str, Artifact]]:
         if self.status is None or self.status == WorkflowStatus.Running:
             return {}
         else:

@@ -67,7 +67,7 @@ class ArgoClient:
         return self._submit_workflow(namespace, body, wait)
 
     def create(
-        self, workflow: dict[str, any], namespace: str = None, wait: bool = False
+        self, workflow: Dict[str, any], namespace: str = None, wait: bool = False
     ) -> WorkflowResult:
         """[summary]
 
