@@ -1,13 +1,14 @@
 [flake8]
-count = True
-show-source = True
-statistics = True
-max-complexity = 20
-per-file-ignores = __init__.py:F401
-exclude =
-    .git,
-    __pycache__
-ignore =
-    E505
-    E501
-    F401
+min_python_version = 3.6.0
+max-line-length = 88
+ban-relative-imports = true
+inline-quotes = double
+mypy-init-return = true
+enable-extensions = TC, TC2
+type-checking-exempt-modules = typing, typing-extensions
+extend-ignore =
+    E501 #Line too long
+extend-exclude =
+    tests/**,
+    argo_workflow_tools/models/**
+    __init__.py

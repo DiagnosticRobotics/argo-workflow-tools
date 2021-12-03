@@ -1,8 +1,8 @@
 import time
 from typing import Optional
 
-from .argo_http_client import ArgoHttpClient
-from .terminal_loading_animation import TerminalLoadingAnimation
+from argo_workflow_tools.argo_http_client import ArgoHttpClient
+from argo_workflow_tools.terminal_loading_animation import TerminalLoadingAnimation
 
 POLLING_INTERVAL_SECONDS = 1.0
 RUNNING_PHASE = "Running"

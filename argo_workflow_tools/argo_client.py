@@ -1,16 +1,18 @@
 from typing import Dict
 
-from .argo_http_client import (
+from argo_workflow_tools.argo_http_client import (
     ArgoApiException,
     ArgoHttpClient,
     ArgoSubmitRequestBody,
     SubmitOptions,
 )
-from .argo_options import ArgoOptions
-from .exceptions.workflow_not_found_exception import WorkflowNotFoundException
-from .workflow_result import WorkflowResult
-from .workflow_status import WorkflowStatus
-from .workflow_status_checker import WorkflowStatusChecker
+from argo_workflow_tools.argo_options import ArgoOptions
+from argo_workflow_tools.exceptions.workflow_not_found_exception import (
+    WorkflowNotFoundException,
+)
+from argo_workflow_tools.workflow_result import WorkflowResult
+from argo_workflow_tools.workflow_status import WorkflowStatus
+from argo_workflow_tools.workflow_status_checker import WorkflowStatusChecker
 
 
 def _log_workflow_web_page_link(
@@ -23,8 +25,8 @@ def _log_workflow_web_page_link(
 
 
 class ArgoClient:
-    """ Client to run an manage argo workflows 
-    """
+    """Client to run an manage argo workflows"""
+
     def __init__(self, argo_server_uri: str, options: ArgoOptions):
         self._argo_server_uri = argo_server_uri
         self._argo_http_client = ArgoHttpClient(argo_server_uri, options)
@@ -41,7 +43,7 @@ class ArgoClient:
         """[summary]
 
         Args:
-            template_name (str): template 
+            template_name (str): template
             params (Dict[str, any], optional): workflow parameters. Defaults to None.
             namespace (str, optional): override the namespace to run the workflow. Defaults to None.
             annotations (dict, optional): workflow annoteations. Defaults to {}.

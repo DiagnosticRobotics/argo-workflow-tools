@@ -4,7 +4,7 @@ from typing import List
 import requests
 from requests.auth import AuthBase
 
-from .argo_options import ArgoOptions
+from argo_workflow_tools.argo_options import ArgoOptions
 
 
 class ArgoApiException(Exception):
