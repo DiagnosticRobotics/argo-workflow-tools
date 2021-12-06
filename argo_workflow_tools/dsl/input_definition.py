@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Iterator, Optional
 
 from argo_workflow_tools.dsl.parameter_builders import ParameterBuilder
+from argo_workflow_tools.dsl.utils.path_builder import task_output_path, parameter_path, with_item_path
 
 
 class SourceType(Enum):
@@ -17,13 +18,13 @@ class SourceType(Enum):
 
 class InputDefinition:
     def __init__(
-        self,
-        source_type: SourceType,
-        name: str,
-        source_node_id: str = None,
-        references: Optional["InputDefinition"] = None,
-        parameter_builder: ParameterBuilder = None,
-        key_name: str = None,
+            self,
+            source_type: SourceType,
+            name: str,
+            source_node_id: str = None,
+            references: Optional["InputDefinition"] = None,
+            parameter_builder: ParameterBuilder = None,
+            key_name: str = None,
     ):
         self.source_type = source_type
         self.name = name
@@ -50,8 +51,8 @@ class InputDefinition:
     @property
     def key_path(self):
         if (
-            self.source_type == SourceType.KEY
-            or self.source_type == SourceType.PROPERTY
+                self.source_type == SourceType.KEY
+                or self.source_type == SourceType.PROPERTY
         ):
             key_path = self.reference.key_path
             if key_path:
@@ -68,6 +69,25 @@ class InputDefinition:
         else:
             return self
 
+    def path(self) -> str:
+        if self.is_partition:
+            return with_item_path(self.key_path)
+        else:
+            if self.is_node_output:
+                return task_output_path(self.source_node_id, self.name, self.key_name)
+            else:
+                return parameter_path(self.name, self.key_path)
+
+    def with_path(self) -> str:
+        if self.is_partition:
+            if self.is_node_output:
+                return task_output_path(self.source_node_id, self.name, self.key_path)
+            else:
+                return parameter_path(self.name, self.key_path)
+        else:
+            return None
+
+
     def __iter__(self) -> Iterator:
         return iter(
             [
@@ -82,8 +102,8 @@ class InputDefinition:
 
     def __getitem__(self, name) -> "InputDefinition":
         if (
-            self.source_type == SourceType.KEY
-            or self.source_type == SourceType.PROPERTY
+                self.source_type == SourceType.KEY
+                or self.source_type == SourceType.PROPERTY
         ):
             raise ValueError(
                 f"You are trying to call item '{name}' under '{self.key_name}'. "
@@ -112,3 +132,4 @@ class InputDefinition:
 
     def __repr__(self):
         return f"InputDefinition(source_type={self.source_type.name} name={self.name} source_node_id={self.source_node_id})"
+
