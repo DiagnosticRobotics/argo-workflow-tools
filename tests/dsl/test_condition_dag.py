@@ -3,7 +3,7 @@ from argo_workflow_tools import DAG, Task, Workflow, Condition
 
 def test_conditional_tasks_dag():
     @Task(image="quay.io/bitnami/python:3.10")
-    def say_hello(name):
+    def say_hello(name: str):
         message = f"hello {name}"
         print(message)
         return message
@@ -16,9 +16,12 @@ def test_conditional_tasks_dag():
             say_hello(name)
 
     workflow = Workflow(
-        name="hello-world", entrypoint=command_hello, arguments={"name": "Brian"}
+        generated_name="hello-world",
+        entrypoint=command_hello,
+        arguments={"name": "james"},
     )
     model = workflow.to_model()
+    print(workflow.to_yaml())
 
     dag_template = model.spec.templates[1]
     assert dag_template.dag is not None, "dag does not exist"

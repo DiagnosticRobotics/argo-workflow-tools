@@ -11,7 +11,7 @@ def say_hello(name: str):
 
 
 @DAG()
-def command_hello(name):
+def command_hello(name: str):
     message = say_hello(name)
     return message
 
@@ -45,5 +45,6 @@ def test_export_to_yaml():
     workflow_yaml = Workflow(
         name="hello-world", entrypoint=command_hello, arguments={"name": "Brian"}
     ).to_yaml()
+    print(workflow_yaml)
     workflow_dict = yaml.safe_load(workflow_yaml)
     assert workflow_dict["kind"] == "Workflow"

@@ -5,7 +5,7 @@ from argo_workflow_tools import DAG, Task, Workflow
 
 
 @Task(image="quay.io/bitnami/python:3.10")
-def say_hello(name):
+def say_hello(name: str):
     message = f"hello {name}"
     return message
 

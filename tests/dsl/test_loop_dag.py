@@ -12,7 +12,7 @@ def generate_list(partitions: int, partition_size: int):
 
 
 @dsl_decorators.Task(image="quay.io/bitnami/python:3.10")
-def sum_task(items):
+def sum_task(items: list[int]):
     return sum(items)
 
 

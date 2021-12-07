@@ -12,8 +12,8 @@ from argo_workflow_tools.dsl.node_properties import (
     DAGNodeProperties,
     TaskNodeProperties,
 )
-from argo_workflow_tools.dsl.parameter_builders.json_parameter_builder import (
-    JSONParameterBuilder,
+from argo_workflow_tools.dsl.parameter_builders.default_parameter_builder import (
+    DefaultParameterBuilder,
 )
 
 from argo_workflow_tools.dsl.utils.utils import (
@@ -41,14 +41,20 @@ def _create_task_script(
     if func_obj.func is None:
         return None
     code = inspect.getsource(func_obj.func)
+    function_signature = inspect.signature(func_obj.func)
     code = code[code.find("def ") :]
     builder_imports = set()
     inputs = ""
     for name, argument in func_obj.arguments.items():
-        json_parameter = JSONParameterBuilder(name, parameters[name].name)
+        parameter_annotation = function_signature.parameters[name].annotation
+        json_parameter = DefaultParameterBuilder(
+            name, parameters[name].name, parameter_annotation, func_obj.name
+        )
         builder_imports = builder_imports.union(json_parameter.imports())
         inputs += json_parameter.variable_from_input() + os.linesep
-    builder = func_obj.outputs.parameter_builder
+    builder = DefaultParameterBuilder(
+        "result", "result", function_signature.return_annotation, func_obj.name
+    )
     outputs = builder.variable_to_output()
     call = f"result={func_obj.func.__name__}({str.join(',', inspect.signature(func_obj.func).parameters.keys())})"
     builder_imports = str.join(
