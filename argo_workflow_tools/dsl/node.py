@@ -11,8 +11,8 @@ from argo_workflow_tools.dsl.node_properties.dag_node_properties import (
 from argo_workflow_tools.dsl.node_properties.task_node_properties import (
     TaskNodeProperties,
 )
-from argo_workflow_tools.dsl.parameter_builders.json_parameter_builder import (
-    JSONParameterBuilder,
+from argo_workflow_tools.dsl.parameter_builders.default_parameter_builder import (
+    DefaultParameterBuilder,
 )
 from argo_workflow_tools.dsl.utils.utils import sanitize_name, uuid_short
 from argo_workflow_tools.dsl.workflow_template_collector import (
@@ -190,10 +190,7 @@ class DAGNode(Node):
                 "Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead"
             )
         output = InputDefinition(
-            source_type=SourceType.NODE_OUTPUT,
-            source_node_id=guid,
-            name="result",
-            parameter_builder=JSONParameterBuilder("result", "result"),
+            source_type=SourceType.NODE_OUTPUT, source_node_id=guid, name="result"
         )
         conditions = collect_conditions()
 
@@ -257,14 +254,18 @@ class TaskNode(Node):
                 source_node_id=guid,
                 name=sanitize_name("result"),
                 references=partitioned_arguments,
-                parameter_builder=JSONParameterBuilder("result", "result"),
+                parameter_builder=DefaultParameterBuilder(
+                    "result", "result", None, self._func.__name__
+                ),
             )
         else:
             output = InputDefinition(
                 source_type=SourceType.NODE_OUTPUT,
                 source_node_id=guid,
                 name=sanitize_name("result"),
-                parameter_builder=JSONParameterBuilder("result", "result"),
+                parameter_builder=DefaultParameterBuilder(
+                    "result", "result", self._func.__name__, None, self._func.__name__
+                ),
             )
 
         add_task(

@@ -4,7 +4,7 @@ from argo_workflow_tools import DAG, Task, WorkflowTemplate
 
 def test_workflow_tempalte():
     @Task(image="python:3.10")
-    def say_hello(name):
+    def say_hello(name: str):
         return f"hello {name}"
 
     @DAG()
@@ -20,7 +20,7 @@ def test_workflow_tempalte():
 
 def test_workflow_tempalte_arguments():
     @Task(image="python:3.10")
-    def say_hello(name):
+    def say_hello(name: str):
         return f"hello {name}"
 
     @DAG()

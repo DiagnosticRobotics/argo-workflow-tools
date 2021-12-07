@@ -108,7 +108,7 @@ to run this simple task in argo all we need to do is to decorate our code in a t
 
 ```python
 @dsl.Task(image="python3:3.10")
-def say_hello(name):
+def say_hello(name:str):
     message = f"hello {name}"
     print(message)
     return message
@@ -125,12 +125,12 @@ We support task depndency declaration implicitly by analyzing inputs and outputs
 When writing DAG functions make sure you keep it a simple as possible, call only DAG or TASK flows.
 
 ```python
-@dsl.Task(image="quay.io/bitnami/python:3.10")
+@dsl.Task(image="python:3.10")
 def multiply_task(x: int):
     return x * 2
 
 
-@dsl.Task(image="quay.io/bitnami/python:3.10")
+@dsl.Task(image="python:3.10")
 def sum_task(x: int, y: int):
     return x + y
 
@@ -142,16 +142,12 @@ def diamond(num: int):
     c = multiply_task(num)
     return sum_task(b, c)
 
-
-diamond(2)
-workflow = Workflow(name="diamond-params", entrypoint=diamond, arguments=dict(num=7))
-print(workflow.to_yaml())
  ```
 
 #### Explicit depndencies 
 In case a task does not return a parameter, you can set an explicit dependency by sending wait_for argument to the next task
 ```python
-@dsl.Task(image="quay.io/bitnami/python:3.10")
+@dsl.Task(image="python:3.10")
 def print_task():
     print(f"text")
 
@@ -163,10 +159,6 @@ def diamond():
     c = print_task(wait_for=a)
     print_task(wait_for=[c, b])
 
-
-diamond()
-workflow = Workflow(name="diamond", entrypoint=diamond)
-print(workflow.to_yaml())
 ```
 
 #### Loops
@@ -174,7 +166,7 @@ we support map reduce workflows through ```[for in]``` loop, the iterable input 
 
 currently only one level of nesting is supported, in case you wish to use nested loops, extract the second loop into a fucntion and decorate it as well with a DAG decorater.
 ```python
-@dsl.Task(image="quay.io/bitnami/python:3.10")
+@dsl.Task(image="python:3.10")
 def generate_list(partitions: int, partition_size: int):
     items = []
     for i in range(partitions):
@@ -183,8 +175,8 @@ def generate_list(partitions: int, partition_size: int):
     return items
 
 
-@dsl.Task(image="quay.io/bitnami/python:3.10")
-def sum_task(items):
+@dsl.Task(image="python:3.10")
+def sum_task(items:list[int]):
     return sum(items)
 
 
@@ -193,11 +185,31 @@ def map_reduce(partitions, partition_size):
     partition_list = generate_list(partitions, partition_size)
     partition_sums = [sum_task(partition) for partition in partition_list]
     return sum_task(partition_sums)
+```
+
+#### Conditions 
+we support conditional task run by employing the 'with condition' syntax
+
+```python
+    @Task(image="python:3.10")
+    def say_hello(name: str):
+        message = f"hello {name}"
+        print(message)
+        return message
+    
+    @Task(image="python:3.10")
+    def say_goodbye(name: str):
+        message = f"goodbye {name}"
+        print(message)
+        return message
 
 
-map_reduce(7, 22)
-workflow = Workflow(name="map-reduce", entrypoint=map_reduce, arguments=dict(partitions=7, partition_size=22))
-print(workflow.to_yaml())
+    @DAG()
+    def command_hello(name, command):
+        with Condition().equals(command, "hello"):
+            say_hello(name)
+        with Condition().equals(command, "goodbye"):
+            say_goodbye(name)
 ```
 
 ## How to contribute
