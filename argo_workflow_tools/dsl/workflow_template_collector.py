@@ -26,6 +26,25 @@ def collect_tasks() -> list[NodeReference]:
     return dag_tasks.get([])
 
 
+_conditions: ContextVar[List[any]] = ContextVar("conditions")
+
+
+def push_condition(condition) -> None:
+    conditions = _conditions.get([])
+    conditions.append(condition)
+    _conditions.set(conditions)
+
+
+def pop_condition() -> None:
+    conditions = _conditions.get([])
+    conditions.pop()
+    _conditions.set(conditions)
+
+
+def collect_conditions() -> any:
+    return _conditions.get([])
+
+
 _workflow_templates: ContextVar[List[Template]] = ContextVar("workflow_templates")
 
 

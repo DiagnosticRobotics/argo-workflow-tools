@@ -2,6 +2,11 @@ from enum import Enum
 from typing import Iterator, Optional
 
 from argo_workflow_tools.dsl.parameter_builders import ParameterBuilder
+from argo_workflow_tools.dsl.utils.path_builder import (
+    task_output_path,
+    parameter_path,
+    with_item_path,
+)
 
 
 class SourceType(Enum):
@@ -67,6 +72,24 @@ class InputDefinition:
             return self.reference.partition_source
         else:
             return self
+
+    def path(self) -> str:
+        if self.is_partition:
+            return with_item_path(self.key_path)
+        else:
+            if self.is_node_output:
+                return task_output_path(self.source_node_id, self.name, self.key_name)
+            else:
+                return parameter_path(self.name, self.key_path)
+
+    def with_path(self) -> str:
+        if self.is_partition:
+            if self.is_node_output:
+                return task_output_path(self.source_node_id, self.name, self.key_path)
+            else:
+                return parameter_path(self.name, self.key_path)
+        else:
+            return None
 
     def __iter__(self) -> Iterator:
         return iter(

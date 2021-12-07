@@ -4,9 +4,10 @@ from contextvars import copy_context
 from typing import Mapping, Optional, Union
 
 from argo_workflow_tools.dsl import building_mode_context, workflow_template_collector
+from argo_workflow_tools.dsl.condition import BinaryOp, UnaryOp
 from argo_workflow_tools.dsl.dag_task import DAGReference, NodeReference, TaskReference
 from argo_workflow_tools.dsl.node import DAGNode
-from argo_workflow_tools.dsl.node_output import InputDefinition, SourceType
+from argo_workflow_tools.dsl.input_definition import InputDefinition, SourceType
 from argo_workflow_tools.dsl.node_properties import (
     DAGNodeProperties,
     TaskNodeProperties,
@@ -14,11 +15,7 @@ from argo_workflow_tools.dsl.node_properties import (
 from argo_workflow_tools.dsl.parameter_builders.json_parameter_builder import (
     JSONParameterBuilder,
 )
-from argo_workflow_tools.dsl.utils.path_builder import (
-    parameter_path,
-    task_output_path,
-    with_item_path,
-)
+
 from argo_workflow_tools.dsl.utils.utils import (
     get_arguments,
     get_inputs,
@@ -128,6 +125,15 @@ def _build_with(params: list[InputDefinition]) -> Optional[str]:
         return None
 
 
+def build_condition(conditions: list[Union[BinaryOp, UnaryOp]]):
+    if not conditions or len(conditions) == 0:
+        return None
+
+    condition_expr = [condition for condition in conditions]
+
+    return "&&".join(condition_expr)
+
+
 def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
     dependencies = set(
         filter(
@@ -157,6 +163,7 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
             arguments=get_arguments(list(arguments)),
             dependencies=list(dependencies),
             withParam=with_param,
+            when=build_condition(dag_task.conditions),
         )
     elif isinstance(dag_task, TaskReference):
         task_template = _build_task_template(dag_task)
@@ -167,25 +174,15 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
             dependencies=list(dependencies),
             arguments=get_arguments(arguments),
             withParam=with_param,
+            when=build_condition(dag_task.conditions),
         )
         return task
     else:
         raise AssertionError("only DAG or task nodes are supported")
 
 
-def _build_node_input(input_name: str, input_type: InputDefinition) -> argo.Parameter:
-    parameter = argo.Parameter(name=sanitize_name(input_name))
-    if input_type.is_partition:
-        parameter.value = with_item_path(input_type.key_path)
-        return parameter
-    if not input_type.is_node_output:
-        parameter.value = parameter_path(input_type.name, input_type.key_path)
-        return parameter
-    else:
-        parameter.value = task_output_path(
-            input_type.source_node_id, input_type.name, input_type.key_path
-        )
-        return parameter
+def _build_node_input(input_name: str, input_def: InputDefinition) -> argo.Parameter:
+    return argo.Parameter(name=sanitize_name(input_name), value=input_def.path())
 
 
 def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
@@ -196,12 +193,7 @@ def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
         argo_parameter = argo.Parameter(name=sanitize_name(parameter.name))
         return argo_parameter
     else:
-        argo_parameter = argo.Parameter(
-            name=parameter.name,
-        )
-        argo_parameter.value = task_output_path(
-            parameter.source_node_id, parameter.name
-        )
+        argo_parameter = argo.Parameter(name=parameter.name, value=parameter.path())
         return argo_parameter
 
 
@@ -233,11 +225,7 @@ def _build_dag_outputs(
     return [
         argo.Parameter(
             name=output.name,
-            valueFrom=argo.ValueFrom(
-                parameter=task_output_path(
-                    node_id=output.source_node_id, name=output.name, key=output.key_path
-                )
-            ),
+            valueFrom=argo.ValueFrom(parameter=output.path()),
         )
         for output_name, output in outputs.items()
     ]

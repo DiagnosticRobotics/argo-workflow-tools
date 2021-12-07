@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Callable, Mapping, Union
 
-from argo_workflow_tools.dsl.node_output import InputDefinition
+from argo_workflow_tools.dsl.input_definition import InputDefinition
 from argo_workflow_tools.dsl.node_properties import (
     DAGNodeProperties,
     TaskNodeProperties,
@@ -21,6 +21,7 @@ class NodeReference(object):
     node: str
     arguments: Mapping[str, Union[InputDefinition]]
     wait_for: list[InputDefinition]
+    conditions: list[any]
 
 
 @dataclass
