@@ -7,27 +7,33 @@ def test_conditional_tasks_dag():
         message = f"hello {name}"
         print(message)
         return message
+    
+    @Task(image="quay.io/bitnami/python:3.10")
+    def say_goodbye(name: str):
+        message = f"goodbye {name}"
+        print(message)
+        return message
+
 
     @DAG()
-    def command_hello(name):
-        with Condition().equals(name, "james"):
+    def command_hello(name, command):
+        with Condition().equals(command, "hello"):
             say_hello(name)
-        with Condition().equals(name, True):
-            say_hello(name)
+        with Condition().equals(command, "goodbye"):
+            say_goodbye(name)
 
     workflow = Workflow(
         generated_name="hello-world",
         entrypoint=command_hello,
-        arguments={"name": "james"},
+        arguments={"name": "james","command":"hello"},
     )
     model = workflow.to_model()
-    print(workflow.to_yaml())
-
-    dag_template = model.spec.templates[1]
+    
+    dag_template = model.spec.templates[2]
     assert dag_template.dag is not None, "dag does not exist"
     assert (
-        dag_template.dag.tasks[0].when == " {{inputs.parameters.name}} == james "
+        dag_template.dag.tasks[0].when == " {{inputs.parameters.command}} == hello "
     ), "dag does not reference task"
     assert (
-        dag_template.dag.tasks[1].when == " {{inputs.parameters.name}} == True "
+        dag_template.dag.tasks[1].when == " {{inputs.parameters.command}} == goodbye "
     ), "dag does not reference task"
