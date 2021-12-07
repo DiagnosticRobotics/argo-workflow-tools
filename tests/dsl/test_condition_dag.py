@@ -1,14 +1,7 @@
-import pytest
-import yaml
-
-from argo_workflow_tools import DAG, Task, Workflow
-from argo_workflow_tools.dsl.condition import Condition
+from argo_workflow_tools import DAG, Task, Workflow, Condition
 
 
-
-
-def test_diamond_params_dag():
-
+def test_conditional_tasks_dag():
     @Task(image="quay.io/bitnami/python:3.10")
     def say_hello(name):
         message = f"hello {name}"
@@ -30,8 +23,8 @@ def test_diamond_params_dag():
     dag_template = model.spec.templates[1]
     assert dag_template.dag is not None, "dag does not exist"
     assert (
-            dag_template.dag.tasks[0].when == " {{inputs.parameters.name}} == james "
+        dag_template.dag.tasks[0].when == " {{inputs.parameters.name}} == james "
     ), "dag does not reference task"
     assert (
-            dag_template.dag.tasks[1].when == " {{inputs.parameters.name}} == True "
+        dag_template.dag.tasks[1].when == " {{inputs.parameters.name}} == True "
     ), "dag does not reference task"

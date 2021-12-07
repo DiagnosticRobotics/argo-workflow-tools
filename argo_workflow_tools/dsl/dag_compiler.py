@@ -26,7 +26,7 @@ from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
 
 
 def _create_task_script(
-        func_obj: TaskReference, parameters: dict[str, argo.Parameter]
+    func_obj: TaskReference, parameters: dict[str, argo.Parameter]
 ) -> str:
     """
     generates a runnable script out of a task function, adding input and output boilerplate
@@ -41,7 +41,7 @@ def _create_task_script(
     if func_obj.func is None:
         return None
     code = inspect.getsource(func_obj.func)
-    code = code[code.find("def "):]
+    code = code[code.find("def ") :]
     builder_imports = set()
     inputs = ""
     for name, argument in func_obj.arguments.items():
@@ -55,11 +55,11 @@ def _create_task_script(
         os.linesep, list(builder_imports.union(builder.imports()))
     )
     script = (
-            f"{builder_imports}\n"
-            + f"{code}\n"
-            + f"{inputs}\n"
-            + f"{call}\n"
-            + f"{outputs}"
+        f"{builder_imports}\n"
+        + f"{code}\n"
+        + f"{inputs}\n"
+        + f"{call}\n"
+        + f"{outputs}"
     )
     return script
 
@@ -131,7 +131,7 @@ def build_condition(conditions: list[Union[BinaryOp, UnaryOp]]):
 
     condition_expr = [condition for condition in conditions]
 
-    return '&&'.join(condition_expr)
+    return "&&".join(condition_expr)
 
 
 def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
@@ -141,10 +141,10 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
             [
                 input_dep.source_node_id
                 for input_dep in filter(
-                lambda x: isinstance(x, InputDefinition)
-                          and not x.source_type == SourceType.PARAMETER,
-                list(dag_task.arguments.values()) + dag_task.wait_for,
-            )
+                    lambda x: isinstance(x, InputDefinition)
+                    and not x.source_type == SourceType.PARAMETER,
+                    list(dag_task.arguments.values()) + dag_task.wait_for,
+                )
             ],
         )
     )
@@ -163,7 +163,7 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
             arguments=get_arguments(list(arguments)),
             dependencies=list(dependencies),
             withParam=with_param,
-            when=build_condition(dag_task.conditions)
+            when=build_condition(dag_task.conditions),
         )
     elif isinstance(dag_task, TaskReference):
         task_template = _build_task_template(dag_task)
@@ -174,7 +174,7 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
             dependencies=list(dependencies),
             arguments=get_arguments(arguments),
             withParam=with_param,
-            when=build_condition(dag_task.conditions)
+            when=build_condition(dag_task.conditions),
         )
         return task
     else:
@@ -182,8 +182,7 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
 
 
 def _build_node_input(input_name: str, input_def: InputDefinition) -> argo.Parameter:
-    return argo.Parameter(name=sanitize_name(input_name),value=input_def.path())
-
+    return argo.Parameter(name=sanitize_name(input_name), value=input_def.path())
 
 
 def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
@@ -194,19 +193,16 @@ def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
         argo_parameter = argo.Parameter(name=sanitize_name(parameter.name))
         return argo_parameter
     else:
-        argo_parameter = argo.Parameter(
-            name=parameter.name,
-            value=parameter.path()
-        )
+        argo_parameter = argo.Parameter(name=parameter.name, value=parameter.path())
         return argo_parameter
 
 
 def _build_dag_outputs(
-        dag_output: Union[
-            None,
-            InputDefinition,
-            Mapping[str, InputDefinition],
-        ]
+    dag_output: Union[
+        None,
+        InputDefinition,
+        Mapping[str, InputDefinition],
+    ]
 ) -> list[Union[argo.Parameter, argo.Artifact]]:
     """
     Builds DAG output parameter out of DAG definition
@@ -214,8 +210,8 @@ def _build_dag_outputs(
     outputs: Mapping[str, InputDefinition] = {}
 
     if (
-            isinstance(dag_output, InputDefinition)
-            and dag_output.source_type == SourceType.NODE_OUTPUT
+        isinstance(dag_output, InputDefinition)
+        and dag_output.source_type == SourceType.NODE_OUTPUT
     ):
         outputs = {"result": dag_output}
     elif isinstance(dag_output, Mapping):
@@ -229,9 +225,7 @@ def _build_dag_outputs(
     return [
         argo.Parameter(
             name=output.name,
-            valueFrom=argo.ValueFrom(
-                parameter=output.path()
-            ),
+            valueFrom=argo.ValueFrom(parameter=output.path()),
         )
         for output_name, output in outputs.items()
     ]

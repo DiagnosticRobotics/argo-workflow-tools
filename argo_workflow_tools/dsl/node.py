@@ -15,7 +15,10 @@ from argo_workflow_tools.dsl.parameter_builders.json_parameter_builder import (
     JSONParameterBuilder,
 )
 from argo_workflow_tools.dsl.utils.utils import sanitize_name, uuid_short
-from argo_workflow_tools.dsl.workflow_template_collector import add_task, collect_conditions
+from argo_workflow_tools.dsl.workflow_template_collector import (
+    add_task,
+    collect_conditions,
+)
 
 
 class Node(object):
@@ -84,7 +87,7 @@ class Node(object):
             return []
         dependencies = cast(InputDefinition, kwargs.get("wait_for"))
         if (
-                isinstance(dependencies, InputDefinition) and dependencies.is_node_output
+            isinstance(dependencies, InputDefinition) and dependencies.is_node_output
         ):  # TODO or it's variants NODE_OUTPUT
             return [dependencies]
         if isinstance(dependencies, Iterable):
@@ -98,11 +101,11 @@ class Node(object):
     @staticmethod
     def _reduce_fan_in_arguments(name: str, arg: Any) -> Any:
         if (
-                isinstance(arg, Sequence)
-                and len(arg) == 1
-                and isinstance(arg[0], InputDefinition)
-                and arg[0].is_node_output
-                and arg[0].reference
+            isinstance(arg, Sequence)
+            and len(arg) == 1
+            and isinstance(arg[0], InputDefinition)
+            and arg[0].is_node_output
+            and arg[0].reference
         ):
             return InputDefinition(
                 SourceType.REDUCE,
@@ -183,7 +186,9 @@ class DAGNode(Node):
             filter(lambda argument: argument.is_partition, arguments.values())
         )
         if len(partitioned_arguments) > 1:
-            raise ValueError("Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead")
+            raise ValueError(
+                "Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead"
+            )
         output = InputDefinition(
             source_type=SourceType.NODE_OUTPUT,
             source_node_id=guid,
@@ -202,7 +207,7 @@ class DAGNode(Node):
                 outputs=[output],
                 node=self,
                 properties=self.properties,
-                conditions=conditions
+                conditions=conditions,
             ),
         )
 
@@ -239,9 +244,13 @@ class TaskNode(Node):
             filter(lambda argument: argument.is_partition, arguments.values())
         )
         if len(partitioned_arguments) > 1:
-            raise ValueError("Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead")
+            raise ValueError(
+                "Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead"
+            )
         guid = sanitize_name(self._func.__name__) + "-" + uuid_short()
-        conditions = [condition.condition_string() for condition in collect_conditions()]
+        conditions = [
+            condition.condition_string() for condition in collect_conditions()
+        ]
         if partitioned_arguments:
             output = InputDefinition(
                 source_type=SourceType.NODE_OUTPUT,
@@ -268,7 +277,7 @@ class TaskNode(Node):
                 outputs=output,
                 properties=self.properties,
                 node=self,
-                conditions=conditions
+                conditions=conditions,
             ),
         )
         return output
