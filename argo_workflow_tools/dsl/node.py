@@ -87,7 +87,7 @@ class Node(object):
             return []
         dependencies = cast(InputDefinition, kwargs.get("wait_for"))
         if (
-                isinstance(dependencies, InputDefinition) and dependencies.is_node_output
+            isinstance(dependencies, InputDefinition) and dependencies.is_node_output
         ):  # TODO or it's variants NODE_OUTPUT
             return [dependencies]
         if isinstance(dependencies, Iterable):
@@ -101,11 +101,11 @@ class Node(object):
     @staticmethod
     def _reduce_fan_in_arguments(name: str, arg: Any) -> Any:
         if (
-                isinstance(arg, Sequence)
-                and len(arg) == 1
-                and isinstance(arg[0], InputDefinition)
-                and arg[0].is_node_output
-                and arg[0].reference
+            isinstance(arg, Sequence)
+            and len(arg) == 1
+            and isinstance(arg[0], InputDefinition)
+            and arg[0].is_node_output
+            and arg[0].reference
         ):
             return InputDefinition(
                 SourceType.REDUCE,
@@ -255,14 +255,18 @@ class TaskNode(Node):
                 source_node_id=guid,
                 name=sanitize_name("result"),
                 references=partitioned_arguments,
-                parameter_builder=self.properties.outputs.get("result", DefaultParameterBuilder(None)),
+                parameter_builder=self.properties.outputs.get(
+                    "result", DefaultParameterBuilder(None)
+                ),
             )
         else:
             output = InputDefinition(
                 source_type=SourceType.NODE_OUTPUT,
                 source_node_id=guid,
                 name=sanitize_name("result"),
-                parameter_builder=self.properties.outputs.get("result", DefaultParameterBuilder(None)),
+                parameter_builder=self.properties.outputs.get(
+                    "result", DefaultParameterBuilder(None)
+                ),
             )
 
         add_task(
