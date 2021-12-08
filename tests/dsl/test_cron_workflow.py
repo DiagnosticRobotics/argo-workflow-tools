@@ -1,7 +1,7 @@
 from argo_workflow_tools import DAG, CronWorkflow, Task, Workflow
 
 
-@Task(image="quay.io/bitnami/python:3.10")
+@Task(image="python:3.10")
 def say_hello(name: str):
     message = f"hello {name}"
     print(message)

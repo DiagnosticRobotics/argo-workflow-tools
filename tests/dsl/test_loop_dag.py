@@ -2,7 +2,7 @@ from argo_workflow_tools.dsl import dsl_decorators
 from argo_workflow_tools.dsl.workflow import Workflow
 
 
-@dsl_decorators.Task(image="quay.io/bitnami/python:3.10")
+@dsl_decorators.Task(image="python:3.10")
 def generate_list(partitions: int, partition_size: int):
     items = []
     for i in range(partitions):
@@ -11,7 +11,7 @@ def generate_list(partitions: int, partition_size: int):
     return items
 
 
-@dsl_decorators.Task(image="quay.io/bitnami/python:3.10")
+@dsl_decorators.Task(image="python:3.10")
 def sum_task(items: list[int]):
     return sum(items)
 

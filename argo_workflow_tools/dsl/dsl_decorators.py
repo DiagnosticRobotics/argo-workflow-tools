@@ -9,6 +9,7 @@ from argo_workflow_tools.dsl.node_properties.dag_node_properties import (
 from argo_workflow_tools.dsl.node_properties.task_node_properties import (
     TaskNodeProperties,
 )
+from argo_workflow_tools.dsl.parameter_builders import ParameterBuilder
 
 
 def DAG(
@@ -39,6 +40,8 @@ def Task(
     image: str,
     resources: k8s.ResourceRequirements = None,
     working_dir: str = None,
+    inputs: dict[str, ParameterBuilder] = None,
+    outputs: dict[str, ParameterBuilder] = None,
     active_deadline_seconds: int = None,
     fail_fast: bool = None,
     labels: dict[str, str] = None,
@@ -52,6 +55,11 @@ def Task(
     env_from: list[k8s.EnvFromSource] = None,
     image_pull_policy: str = None,
 ) -> Callable[[Callable], Node]:
+    if inputs is None:
+        inputs = {}
+    if outputs is None:
+        outputs = {}
+
     def decorator(func: Callable) -> TaskNode:
         return TaskNode(
             func,
@@ -71,6 +79,8 @@ def Task(
                 env=env,
                 env_from=env_from,
                 image_pull_policy=image_pull_policy,
+                inputs=inputs,
+                outputs=outputs,
             ),
         )
 

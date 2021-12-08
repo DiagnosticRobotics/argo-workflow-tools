@@ -2,18 +2,17 @@ from argo_workflow_tools import DAG, Task, Workflow, Condition
 
 
 def test_conditional_tasks_dag():
-    @Task(image="quay.io/bitnami/python:3.10")
+    @Task(image="python:3.10")
     def say_hello(name: str):
         message = f"hello {name}"
         print(message)
         return message
-    
-    @Task(image="quay.io/bitnami/python:3.10")
+
+    @Task(image="python:3.10")
     def say_goodbye(name: str):
         message = f"goodbye {name}"
         print(message)
         return message
-
 
     @DAG()
     def command_hello(name, command):
@@ -25,10 +24,10 @@ def test_conditional_tasks_dag():
     workflow = Workflow(
         generated_name="hello-world",
         entrypoint=command_hello,
-        arguments={"name": "james","command":"hello"},
+        arguments={"name": "james", "command": "hello"},
     )
     model = workflow.to_model()
-    
+
     dag_template = model.spec.templates[2]
     assert dag_template.dag is not None, "dag does not exist"
     assert (
