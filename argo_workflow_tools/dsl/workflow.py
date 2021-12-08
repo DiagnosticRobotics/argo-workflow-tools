@@ -21,6 +21,7 @@ class WorkflowTemplate:
         namespace: str = None,
         labels=None,
         annotations=None,
+        on_exit: Callable = None,
     ):
         """
         Argo WorkflowTemplate
@@ -35,6 +36,7 @@ class WorkflowTemplate:
         """
         self.name: str = name
         self.entrypoint: Callable = entrypoint
+        self.on_exit: Callable = on_exit
         self.arguments: dict[str, str] = arguments
         self.namespace: str = namespace
         self.labels: dict[str, str] = labels
@@ -44,7 +46,7 @@ class WorkflowTemplate:
         """
         convert workflow to pydantic model
         """
-        spec = compile_dag(self.entrypoint)
+        spec = compile_dag(self.entrypoint, self.on_exit)
         spec.arguments = get_arguments(self.arguments)
         return argo.WorkflowTemplate(
             kind="WorkflowTemplate",
@@ -81,6 +83,7 @@ class CronWorkflow:
         namespace: str = None,
         labels=None,
         annotations=None,
+        on_exit: Callable = None,
     ):
         """
         Cron Workflow
@@ -103,12 +106,13 @@ class CronWorkflow:
         self.annotations: dict[str, str] = annotations
         self.schedule = schedule
         self.concurrency_policy = concurrency_policy
+        self.on_exit: Callable = on_exit
 
     def to_model(self) -> argo.CronWorkflow:
         """
         convert workflow to pydantic model
         """
-        wf_spec = compile_dag(self.entrypoint)
+        wf_spec = compile_dag(self.entrypoint, self.on_exit)
         wf_spec.arguments = get_arguments(self.arguments)
         spec = argo.CronWorkflowSpec(
             workflowSpec=wf_spec,
@@ -149,6 +153,7 @@ class Workflow:
         namespace: str = None,
         labels=None,
         annotations=None,
+        on_exit: Callable = None,
     ):
         self.name: str = sanitize_name(name)
         self.entrypoint: Callable = entrypoint
@@ -157,6 +162,7 @@ class Workflow:
         self.labels: dict[str, str] = labels
         self.annotations: dict[str, str] = annotations
         self.generated_name = generated_name
+        self.on_exit: Callable = on_exit
 
     def to_model(self) -> argo.Workflow:
         """
@@ -166,7 +172,7 @@ class Workflow:
             raise ValueError(
                 "you must specify at least name or generated name arguments for a workflow"
             )
-        spec = compile_dag(self.entrypoint)
+        spec = compile_dag(self.entrypoint, self.on_exit)
         spec.arguments = get_arguments(self.arguments)
         workflow = argo.Workflow(
             kind="Workflow",
