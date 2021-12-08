@@ -332,16 +332,18 @@ def _build_dag_template(node: DAGNode) -> argo.Template:
     return dag_tamplate
 
 
-def compile_dag(entrypoint: DAGNode) -> argo.WorkflowSpec:
+def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None) -> argo.WorkflowSpec:
     """
     compiles a DAG annotated function into a WorkflowSpec arg model
     Parameters
     ----------
     entrypoint : DAG entrypoint
+    on_exit : on_exit DAG entrypoint
 
     Returns
     -------
     WorkflowSpec of the generated DAG
+
     """
     token = building_mode_context.dag_building_mode.set(True)
     try:
@@ -350,9 +352,17 @@ def compile_dag(entrypoint: DAGNode) -> argo.WorkflowSpec:
                 f"{entrypoint.__name__} is not decorated with DAG or Task decorator"
             )
         result = _build_dag_template(entrypoint)
+
+        if on_exit:
+            on_exit_result = _build_dag_template(on_exit)
+        else:
+            on_exit_result = None
+
         workflow_templates = workflow_template_collector.collect_templates()
         workflowspec = argo.WorkflowSpec(
-            templates=workflow_templates, entrypoint=result.name
+            templates=workflow_templates,
+            entrypoint=result.name,
+            onExit=on_exit_result.name,
         )
 
         return workflowspec
