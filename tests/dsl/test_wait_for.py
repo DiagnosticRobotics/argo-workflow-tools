@@ -1,12 +1,12 @@
 from argo_workflow_tools import DAG, Task, Workflow
 
 
-@Task(image="quay.io/bitnami/python:3.10")
+@Task(image="python:3.10")
 def task1():
     pass
 
 
-@Task(image="quay.io/bitnami/python:3.10")
+@Task(image="python:3.10")
 def task2():
     pass
 

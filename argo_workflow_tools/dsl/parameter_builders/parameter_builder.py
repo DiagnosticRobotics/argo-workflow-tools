@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from collections import Callable
 
 
 class ParameterBuilder(ABC):
@@ -10,14 +11,14 @@ class ParameterBuilder(ABC):
         pass
 
     @abstractmethod
-    def variable_from_input(self) -> str:
+    def variable_from_input(self, parameter_name: str, variable_name: str, function: Callable) -> str:
         pass
 
     @abstractmethod
-    def variable_to_output(self) -> str:
+    def variable_to_output(self, parameter_name: str, variable_name: str, function: Callable) -> str:
         pass
 
     @property
     @abstractmethod
-    def artifact_path(self) -> str:
+    def artifact_path(self, parameter_name: str) -> str:
         pass

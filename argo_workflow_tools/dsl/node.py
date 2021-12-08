@@ -254,18 +254,14 @@ class TaskNode(Node):
                 source_node_id=guid,
                 name=sanitize_name("result"),
                 references=partitioned_arguments,
-                parameter_builder=DefaultParameterBuilder(
-                    "result", "result", None, self._func.__name__
-                ),
+                parameter_builder=DefaultParameterBuilder(None),
             )
         else:
             output = InputDefinition(
                 source_type=SourceType.NODE_OUTPUT,
                 source_node_id=guid,
                 name=sanitize_name("result"),
-                parameter_builder=DefaultParameterBuilder(
-                    "result", "result", self._func.__name__, None, self._func.__name__
-                ),
+                parameter_builder=DefaultParameterBuilder(None),
             )
 
         add_task(

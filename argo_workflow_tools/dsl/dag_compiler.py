@@ -26,7 +26,7 @@ from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
 
 
 def _create_task_script(
-    func_obj: TaskReference, parameters: dict[str, argo.Parameter]
+        func_obj: TaskReference, parameters: dict[str, argo.Parameter]
 ) -> str:
     """
     generates a runnable script out of a task function, adding input and output boilerplate
@@ -42,30 +42,26 @@ def _create_task_script(
         return None
     code = inspect.getsource(func_obj.func)
     function_signature = inspect.signature(func_obj.func)
-    code = code[code.find("def ") :]
+    code = code[code.find("def "):]
     builder_imports = set()
     inputs = ""
     for name, argument in func_obj.arguments.items():
         parameter_annotation = function_signature.parameters[name].annotation
-        json_parameter = DefaultParameterBuilder(
-            name, parameters[name].name, parameter_annotation, func_obj.name
-        )
+        json_parameter = DefaultParameterBuilder(parameter_annotation)
         builder_imports = builder_imports.union(json_parameter.imports())
-        inputs += json_parameter.variable_from_input() + os.linesep
-    builder = DefaultParameterBuilder(
-        "result", "result", function_signature.return_annotation, func_obj.name
-    )
-    outputs = builder.variable_to_output()
+        inputs += json_parameter.variable_from_input(parameters[name].name, name, func_obj) + os.linesep
+    builder = DefaultParameterBuilder(function_signature.return_annotation)
+    outputs = builder.variable_to_output("result", "result", func_obj)
     call = f"result={func_obj.func.__name__}({str.join(',', inspect.signature(func_obj.func).parameters.keys())})"
     builder_imports = str.join(
         os.linesep, list(builder_imports.union(builder.imports()))
     )
     script = (
-        f"{builder_imports}\n"
-        + f"{code}\n"
-        + f"{inputs}\n"
-        + f"{call}\n"
-        + f"{outputs}"
+            f"{builder_imports}\n"
+            + f"{code}\n"
+            + f"{inputs}\n"
+            + f"{call}\n"
+            + f"{outputs}"
     )
     return script
 
@@ -147,10 +143,10 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
             [
                 input_dep.source_node_id
                 for input_dep in filter(
-                    lambda x: isinstance(x, InputDefinition)
-                    and not x.source_type == SourceType.PARAMETER,
-                    list(dag_task.arguments.values()) + dag_task.wait_for,
-                )
+                lambda x: isinstance(x, InputDefinition)
+                          and not x.source_type == SourceType.PARAMETER,
+                list(dag_task.arguments.values()) + dag_task.wait_for,
+            )
             ],
         )
     )
@@ -204,11 +200,11 @@ def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
 
 
 def _build_dag_outputs(
-    dag_output: Union[
-        None,
-        InputDefinition,
-        Mapping[str, InputDefinition],
-    ]
+        dag_output: Union[
+            None,
+            InputDefinition,
+            Mapping[str, InputDefinition],
+        ]
 ) -> list[Union[argo.Parameter, argo.Artifact]]:
     """
     Builds DAG output parameter out of DAG definition
@@ -216,8 +212,8 @@ def _build_dag_outputs(
     outputs: Mapping[str, InputDefinition] = {}
 
     if (
-        isinstance(dag_output, InputDefinition)
-        and dag_output.source_type == SourceType.NODE_OUTPUT
+            isinstance(dag_output, InputDefinition)
+            and dag_output.source_type == SourceType.NODE_OUTPUT
     ):
         outputs = {"result": dag_output}
     elif isinstance(dag_output, Mapping):
@@ -264,7 +260,7 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
     output = argo.Parameter(
         name="result",
         valueFrom=argo.ValueFrom(
-            path=task_node.outputs.parameter_builder.artifact_path
+            path=task_node.outputs.parameter_builder.artifact_path("result")
         ),
     )
     task_outputs = get_inputs([output])
