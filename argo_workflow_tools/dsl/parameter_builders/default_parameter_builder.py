@@ -7,9 +7,9 @@ from argo_workflow_tools.dsl.parameter_builders.parameter_builder import (
 
 class DefaultParameterBuilder(ParameterBuilder):
     def __init__(
-            self,
-            type_annotation: type,
-            file_prefix: str = "/tmp",
+        self,
+        type_annotation: type,
+        file_prefix: str = "/tmp",
     ):
         super().__init__()
         self.file_prefix = file_prefix
@@ -21,7 +21,9 @@ class DefaultParameterBuilder(ParameterBuilder):
     def artifact_path(self, parameter_name: str) -> str:
         return f"{self.file_prefix}/{parameter_name}.json"
 
-    def variable_from_input(self, parameter_name: str, variable_name: str, function: Callable) -> str:
+    def variable_from_input(
+        self, parameter_name: str, variable_name: str, function: Callable
+    ) -> str:
         if self.type_annotation.__name__ == "_empty":
             raise ValueError(
                 "DefaultParameterBuilder uses type annotations to generate serializers for types, "
@@ -33,8 +35,14 @@ class DefaultParameterBuilder(ParameterBuilder):
         if self.type_annotation == int:
             return f"{variable_name}=int('{{{{inputs.parameters.{parameter_name}}}}}')"
         if self.type_annotation == float:
-            return f"{variable_name}=float('{{{{inputs.parameters.{parameter_name}}}}}')"
-        return f"{variable_name}=json.loads('{{{{inputs.parameters.{parameter_name}}}}}')"
+            return (
+                f"{variable_name}=float('{{{{inputs.parameters.{parameter_name}}}}}')"
+            )
+        return (
+            f"{variable_name}=json.loads('{{{{inputs.parameters.{parameter_name}}}}}')"
+        )
 
-    def variable_to_output(self, parameter_name: str, variable_name: str, function: Callable) -> str:
+    def variable_to_output(
+        self, parameter_name: str, variable_name: str, function: Callable
+    ) -> str:
         return f"with open('{self.artifact_path(parameter_name)}', 'a') as file:\n  file.write(json.dumps({variable_name}))"

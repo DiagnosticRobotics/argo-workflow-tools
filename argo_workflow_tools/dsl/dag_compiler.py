@@ -47,14 +47,18 @@ def _create_task_script(
     inputs = ""
     for name, argument in func_obj.arguments.items():
         parameter_annotation = function_signature.parameters[name].annotation
-        json_parameter = DefaultParameterBuilder(parameter_annotation)
+        json_parameter = func_obj.properties.inputs.get(name, DefaultParameterBuilder(parameter_annotation))
         builder_imports = builder_imports.union(json_parameter.imports())
-        inputs += json_parameter.variable_from_input(parameters[name].name, name, func_obj) + os.linesep
-    builder = DefaultParameterBuilder(function_signature.return_annotation)
-    outputs = builder.variable_to_output("result", "result", func_obj)
+        inputs += (
+                json_parameter.variable_from_input(parameters[name].name, name, func_obj)
+                + os.linesep
+        )
+    output_builder = func_obj.properties.outputs.get("result",
+                                                     DefaultParameterBuilder(function_signature.return_annotation))
+    outputs = output_builder.variable_to_output("result", "result", func_obj)
     call = f"result={func_obj.func.__name__}({str.join(',', inspect.signature(func_obj.func).parameters.keys())})"
     builder_imports = str.join(
-        os.linesep, list(builder_imports.union(builder.imports()))
+        os.linesep, list(builder_imports.union(output_builder.imports()))
     )
     script = (
             f"{builder_imports}\n"
