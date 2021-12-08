@@ -16,7 +16,7 @@ class NodeReference(object):
 
     id: str
     name: str
-    outputs: [InputDefinition]
+    outputs: Mapping[str, InputDefinition]
     func: Callable
     node: str
     arguments: Mapping[str, Union[InputDefinition]]

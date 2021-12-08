@@ -13,6 +13,8 @@ from argo_workflow_tools.dsl.parameter_builders import ParameterBuilder
 
 
 def DAG(
+    inputs: dict[str, ParameterBuilder] = None,
+    outputs: dict[str, ParameterBuilder] = None,
     active_deadline_seconds: int = None,
     fail_fast: bool = None,
     labels: dict[str, str] = None,
@@ -20,6 +22,10 @@ def DAG(
     parallelism: int = None,
     retry_strategy: argo.RetryStrategy = None,
 ) -> Callable[[Callable], Node]:
+    if inputs is None:
+        inputs = {}
+    if outputs is None:
+        outputs = {}
     def decorator(func: Callable) -> DAGNode:
         return DAGNode(
             func,
@@ -30,6 +36,8 @@ def DAG(
                 annotations=annotations,
                 parallelism=parallelism,
                 retry_strategy=retry_strategy,
+                inputs=inputs,
+                outputs=outputs,
             ),
         )
 

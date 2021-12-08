@@ -87,7 +87,7 @@ class Node(object):
             return []
         dependencies = cast(InputDefinition, kwargs.get("wait_for"))
         if (
-            isinstance(dependencies, InputDefinition) and dependencies.is_node_output
+                isinstance(dependencies, InputDefinition) and dependencies.is_node_output
         ):  # TODO or it's variants NODE_OUTPUT
             return [dependencies]
         if isinstance(dependencies, Iterable):
@@ -101,11 +101,11 @@ class Node(object):
     @staticmethod
     def _reduce_fan_in_arguments(name: str, arg: Any) -> Any:
         if (
-            isinstance(arg, Sequence)
-            and len(arg) == 1
-            and isinstance(arg[0], InputDefinition)
-            and arg[0].is_node_output
-            and arg[0].reference
+                isinstance(arg, Sequence)
+                and len(arg) == 1
+                and isinstance(arg[0], InputDefinition)
+                and arg[0].is_node_output
+                and arg[0].reference
         ):
             return InputDefinition(
                 SourceType.REDUCE,
@@ -189,6 +189,29 @@ class DAGNode(Node):
             raise ValueError(
                 "Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead"
             )
+
+        if len(self.properties.outputs.items()) == 0:
+            outputs = {"result": InputDefinition(
+                source_type=SourceType.NODE_OUTPUT,
+                source_node_id=guid,
+                name=sanitize_name("result"),
+                references=partitioned_arguments,
+                parameter_builder=self.properties.outputs.get(
+                    "result", DefaultParameterBuilder(None)
+                ),
+            )}
+        else:
+            outputs = {
+                name: InputDefinition(
+                    source_type=SourceType.NODE_OUTPUT,
+                    source_node_id=guid,
+                    name=sanitize_name(name),
+                    references=partitioned_arguments,
+                    parameter_builder=parameter_builder
+                )
+                for name, parameter_builder in self.properties.outputs.items()
+            }
+
         output = InputDefinition(
             source_type=SourceType.NODE_OUTPUT, source_node_id=guid, name="result"
         )
@@ -201,14 +224,17 @@ class DAGNode(Node):
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
                 arguments=self._arguments(arguments),
-                outputs=[output],
+                outputs=outputs,
                 node=self,
                 properties=self.properties,
                 conditions=conditions,
             ),
         )
+        if len(outputs.items()) == 1:
+            return list(outputs.values())[0]
+        else:
+            return outputs
 
-        return output
 
 
 class TaskNode(Node):
@@ -248,9 +274,8 @@ class TaskNode(Node):
         conditions = [
             condition.condition_string() for condition in collect_conditions()
         ]
-        if partitioned_arguments:
-
-            output = InputDefinition(
+        if len(self.properties.outputs.items()) == 0:
+            outputs = {"result": InputDefinition(
                 source_type=SourceType.NODE_OUTPUT,
                 source_node_id=guid,
                 name=sanitize_name("result"),
@@ -258,16 +283,18 @@ class TaskNode(Node):
                 parameter_builder=self.properties.outputs.get(
                     "result", DefaultParameterBuilder(None)
                 ),
-            )
+            )}
         else:
-            output = InputDefinition(
-                source_type=SourceType.NODE_OUTPUT,
-                source_node_id=guid,
-                name=sanitize_name("result"),
-                parameter_builder=self.properties.outputs.get(
-                    "result", DefaultParameterBuilder(None)
-                ),
-            )
+            outputs = {
+                name: InputDefinition(
+                    source_type=SourceType.NODE_OUTPUT,
+                    source_node_id=guid,
+                    name=sanitize_name(name),
+                    references=partitioned_arguments,
+                    parameter_builder=parameter_builder
+                )
+                for name, parameter_builder in self.properties.outputs.items()
+            }
 
         add_task(
             TaskReference(
@@ -276,10 +303,13 @@ class TaskNode(Node):
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
                 arguments=self._arguments(arguments),
-                outputs=output,
+                outputs=outputs,
                 properties=self.properties,
                 node=self,
                 conditions=conditions,
             ),
         )
-        return output
+        if len(outputs.items()) == 1:
+            return list(outputs.values())[0]
+        else:
+            return outputs
