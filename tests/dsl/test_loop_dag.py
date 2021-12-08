@@ -41,7 +41,6 @@ def test_loop_dag():
         arguments=dict(partitions=7, partition_size=22),
     )
     model = workflow.to_model()
-    print(workflow.to_yaml())
     dag_template = model.spec.templates[2]
     assert dag_template.dag is not None, "dag does not exist"
     split_task = dag_template.dag.tasks[0]
@@ -62,4 +61,3 @@ def test_loop_params_dag():
         arguments=dict(items="[[1,2],[3,4],[5,6]]"),
     )
     model = workflow.to_model()
-    print(workflow.to_yaml())
