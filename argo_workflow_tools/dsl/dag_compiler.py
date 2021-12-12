@@ -1,11 +1,16 @@
 import inspect
 import os
 from contextvars import copy_context
-from typing import Mapping, Optional, Union
+from typing import Mapping, Optional, Union, Dict, List
 
 from argo_workflow_tools.dsl import building_mode_context, workflow_template_collector
 from argo_workflow_tools.dsl.condition import BinaryOp, UnaryOp
-from argo_workflow_tools.dsl.dag_task import DAGReference, NodeReference, TaskReference
+from argo_workflow_tools.dsl.dag_task import (
+    DAGReference,
+    NodeReference,
+    TaskReference,
+    WorkflowTemplateReference,
+)
 from argo_workflow_tools.dsl.node import DAGNode
 from argo_workflow_tools.dsl.input_definition import InputDefinition, SourceType
 from argo_workflow_tools.dsl.node_properties import (
@@ -26,7 +31,7 @@ from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
 
 
 def _create_task_script(
-        func_obj: TaskReference, parameters: dict[str, argo.Parameter]
+    func_obj: TaskReference, parameters: Dict[str, argo.Parameter]
 ) -> str:
     """
     generates a runnable script out of a task function, adding input and output boilerplate
@@ -42,7 +47,7 @@ def _create_task_script(
         return None
     code = inspect.getsource(func_obj.func)
     function_signature = inspect.signature(func_obj.func)
-    code = code[code.find("def "):]
+    code = code[code.find("def ") :]
     builder_imports = set()
     inputs = ""
     outputs = ""
@@ -53,15 +58,17 @@ def _create_task_script(
         )
         builder_imports = builder_imports.union(json_parameter.imports())
         inputs += (
-                json_parameter.variable_from_input(parameters[name].name, name, func_obj)
-                + os.linesep
+            json_parameter.variable_from_input(parameters[name].name, name, func_obj)
+            + os.linesep
         )
 
     for name, argument in func_obj.outputs.items():
         builder_imports = builder_imports.union(argument.parameter_builder.imports())
         outputs += (
-                argument.parameter_builder.variable_to_output(argument.name, name, func_obj.func)
-                + os.linesep
+            argument.parameter_builder.variable_to_output(
+                argument.name, name, func_obj.func
+            )
+            + os.linesep
         )
     if outputs == "":
         output_builder = func_obj.properties.outputs.get(
@@ -69,15 +76,13 @@ def _create_task_script(
         )
         outputs = output_builder.variable_to_output("result", "result", func_obj)
     call = f"result={func_obj.func.__name__}({str.join(',', inspect.signature(func_obj.func).parameters.keys())})"
-    builder_imports = str.join(
-        os.linesep, list(builder_imports)
-    )
+    builder_imports = str.join(os.linesep, list(builder_imports))
     script = (
-            f"{builder_imports}\n"
-            + f"{code}\n"
-            + f"{inputs}\n"
-            + f"{call}\n"
-            + f"{outputs}"
+        f"{builder_imports}\n"
+        + f"{code}\n"
+        + f"{inputs}\n"
+        + f"{call}\n"
+        + f"{outputs}"
     )
     return script
 
@@ -125,7 +130,7 @@ def _fill_dag_metadata(task_template: argo.Template, properties: DAGNodeProperti
     return task_template
 
 
-def _build_with(params: list[InputDefinition]) -> Optional[str]:
+def _build_with(params: List[InputDefinition]) -> Optional[str]:
     """
     builds "with" param for loop DAGs by analyzing the inputs and looking iterable inputs.
     Parameters
@@ -143,7 +148,7 @@ def _build_with(params: list[InputDefinition]) -> Optional[str]:
         return None
 
 
-def build_condition(conditions: list[Union[BinaryOp, UnaryOp]]):
+def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
     if not conditions or len(conditions) == 0:
         return None
 
@@ -159,10 +164,10 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
             [
                 input_dep.source_node_id
                 for input_dep in filter(
-                lambda x: isinstance(x, InputDefinition)
-                          and not x.source_type == SourceType.PARAMETER,
-                list(dag_task.arguments.values()) + dag_task.wait_for,
-            )
+                    lambda x: isinstance(x, InputDefinition)
+                    and not x.source_type == SourceType.PARAMETER,
+                    list(dag_task.arguments.values()) + dag_task.wait_for,
+                )
             ],
         )
     )
@@ -195,6 +200,18 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
             when=build_condition(dag_task.conditions),
         )
         return task
+    elif isinstance(dag_task, WorkflowTemplateReference):
+        task = argo.DagTask(
+            name=dag_task.id,
+            templateRef=argo.TemplateRef(
+                name=dag_task.workflow_template_name, template=dag_task.name
+            ),
+            dependencies=list(dependencies),
+            arguments=get_arguments(arguments),
+            withParam=with_param,
+            when=build_condition(dag_task.conditions),
+        )
+        return task
     else:
         raise AssertionError("only DAG or task nodes are supported")
 
@@ -208,28 +225,32 @@ def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
     Builds Argo Parameter out of InputDefinition
     """
     if parameter.source_type == SourceType.PARAMETER:
-        argo_parameter = argo.Parameter(name=sanitize_name(parameter.name))
+        argo_parameter = argo.Parameter(
+            name=sanitize_name(parameter.name), default=parameter.default
+        )
         return argo_parameter
     else:
-        argo_parameter = argo.Parameter(name=parameter.name, value=parameter.path())
+        argo_parameter = argo.Parameter(
+            name=parameter.name, value=parameter.path(), default=parameter.default
+        )
         return argo_parameter
 
 
 def _build_dag_outputs(
-        dag_output: Union[
-            None,
-            InputDefinition,
-            Mapping[str, InputDefinition],
-        ]
-) -> list[Union[argo.Parameter, argo.Artifact]]:
+    dag_output: Union[
+        None,
+        InputDefinition,
+        Mapping[str, InputDefinition],
+    ]
+) -> List[Union[argo.Parameter, argo.Artifact]]:
     """
     Builds DAG output parameter out of DAG definition
     """
     outputs: Mapping[str, InputDefinition] = {}
 
     if (
-            isinstance(dag_output, InputDefinition)
-            and dag_output.source_type == SourceType.NODE_OUTPUT
+        isinstance(dag_output, InputDefinition)
+        and dag_output.source_type == SourceType.NODE_OUTPUT
     ):
         outputs = {"result": dag_output}
     elif isinstance(dag_output, Mapping):
@@ -263,9 +284,16 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
     """
     parameters = {
         param_name: InputDefinition(
-            source_type=SourceType.PARAMETER, name=sanitize_name(param_name)
+            source_type=SourceType.PARAMETER,
+            name=sanitize_name(param_name),
+            default=None
+            if isinstance(param_definition.default, type)
+            and param_definition.default.__name__ == "_empty"
+            else param_definition.default,
         )
-        for param_name in inspect.signature(task_node.func).parameters
+        for param_name, param_definition in inspect.signature(
+            task_node.func
+        ).parameters.items()
     }
 
     task_inputs = {
@@ -278,8 +306,10 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
         argo.Parameter(
             name=output_definition.name,
             valueFrom=argo.ValueFrom(
-                path=output_definition.parameter_builder.artifact_path(output_definition.name)
-            )
+                path=output_definition.parameter_builder.artifact_path(
+                    output_definition.name
+                )
+            ),
         )
         for output_name, output_definition in task_node.outputs.items()
     ]
@@ -315,9 +345,16 @@ def _build_dag_template(node: DAGNode) -> argo.Template:
     """
     parameters = {
         param_name: InputDefinition(
-            source_type=SourceType.PARAMETER, name=sanitize_name(param_name)
+            source_type=SourceType.PARAMETER,
+            name=sanitize_name(param_name),
+            default=None
+            if isinstance(param_definition.default, type)
+            and param_definition.default.__name__ == "_empty"
+            else param_definition.default,
         )
-        for param_name in inspect.signature(node.func).parameters
+        for param_name, param_definition in inspect.signature(
+            node.func
+        ).parameters.items()
     }
     ctx = copy_context()
     dag_output = ctx.run(node.func, **parameters)

@@ -18,6 +18,7 @@ class SourceType(Enum):
     KEY = "key"
     PROPERTY = "property"
     BRANCH = "branch"
+    CONST = "const"
 
 
 class InputDefinition:
@@ -29,6 +30,8 @@ class InputDefinition:
         references: Optional["InputDefinition"] = None,
         parameter_builder: ParameterBuilder = None,
         key_name: str = None,
+        value: str = None,
+        default: any = None,
     ):
         self.source_type = source_type
         self.name = name
@@ -36,6 +39,8 @@ class InputDefinition:
         self.reference = references
         self.parameter_builder = parameter_builder
         self.key_name = key_name
+        self.value = value
+        self.default = default
 
     @property
     def is_node_output(self):
@@ -80,14 +85,20 @@ class InputDefinition:
             if self.is_node_output:
                 return task_output_path(self.source_node_id, self.name, self.key_name)
             else:
-                return parameter_path(self.name, self.key_path)
+                if self.source_type == SourceType.PARAMETER:
+                    return parameter_path(self.name, self.key_path)
+                else:
+                    return self.value
 
     def with_path(self) -> str:
         if self.is_partition:
             if self.is_node_output:
                 return task_output_path(self.source_node_id, self.name, self.key_path)
             else:
-                return parameter_path(self.name, self.key_path)
+                if self.source_type == SourceType.PARAMETER:
+                    return parameter_path(self.name, self.key_path)
+                else:
+                    return self.value
         else:
             return None
 

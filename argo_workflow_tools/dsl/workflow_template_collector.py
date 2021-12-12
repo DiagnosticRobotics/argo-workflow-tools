@@ -19,7 +19,7 @@ def add_task(node_reference: NodeReference) -> None:
     dag_tasks.set(tasks)
 
 
-def collect_tasks() -> list[NodeReference]:
+def collect_tasks() -> List[NodeReference]:
     """
     return collected tasks in the current node context
     """

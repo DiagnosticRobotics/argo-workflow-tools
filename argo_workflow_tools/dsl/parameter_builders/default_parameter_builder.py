@@ -1,4 +1,5 @@
 from typing import Callable
+from typing import Set
 
 from argo_workflow_tools.dsl.parameter_builders.parameter_builder import (
     ParameterBuilder,
@@ -15,7 +16,7 @@ class DefaultParameterBuilder(ParameterBuilder):
         self.file_prefix = file_prefix
         self.type_annotation = type_annotation
 
-    def imports(self) -> set[str]:
+    def imports(self) -> Set[str]:
         return {"import json"}
 
     def artifact_path(self, parameter_name: str) -> str:

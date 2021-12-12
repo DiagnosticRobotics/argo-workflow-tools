@@ -24,10 +24,14 @@ class MultipleOutputParameterBuilder(ParameterBuilder):
     def variable_from_input(
         self, parameter_name: str, variable_name: str, function: Callable
     ) -> str:
-        raise NotImplementedError("MultipleOutputParameterBuilder is intended for dictionary based multiple outputs")
+        raise NotImplementedError(
+            "MultipleOutputParameterBuilder is intended for dictionary based multiple outputs"
+        )
 
     def variable_to_output(
         self, parameter_name: str, variable_name: str, function: Callable
     ) -> str:
-        return f"with open('{self.artifact_path(parameter_name)}', 'a') as file:\n" \
-               f"  file.write(json.dumps(result[\"{variable_name}\"]))"
+        return (
+            f"with open('{self.artifact_path(parameter_name)}', 'a') as file:\n"
+            f'  file.write(json.dumps(result["{variable_name}"]))'
+        )

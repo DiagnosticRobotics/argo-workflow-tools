@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from argo_workflow_tools import DAG, Task, Workflow
+from argo_workflow_tools import dsl, Workflow
 
 
 def say_hello(name):
@@ -10,7 +10,7 @@ def say_hello(name):
     return message
 
 
-@DAG()
+@dsl.DAG()
 def say_hello_dag(name):
     return say_hello(name)
 
@@ -31,22 +31,22 @@ def test_inner_task_without_decorator():
         workflow.to_model()
 
 
-@Task(image="python:3")
+@dsl.Task(image="python:3")
 def say_hello_task_mismatch(name):
     print("hello")
 
 
-@Task(image="python:3")
+@dsl.Task(image="python:3")
 def say_hello_task_no_args_mismatch():
     print("hello")
 
 
-@DAG()
+@dsl.DAG()
 def say_hello_dag_mismatch(name):
     return say_hello_task_mismatch(not_name=name)
 
 
-@DAG()
+@dsl.DAG()
 def say_hello_dag_args_mismatch(name):
     return say_hello_task_no_args_mismatch(name)
 

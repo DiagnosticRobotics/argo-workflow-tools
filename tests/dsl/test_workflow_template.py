@@ -1,13 +1,13 @@
 import argo_workflow_tools.models.io.argoproj.workflow.v1alpha1 as argo
-from argo_workflow_tools import DAG, Task, WorkflowTemplate
+from argo_workflow_tools import dsl, WorkflowTemplate
 
 
 def test_workflow_tempalte():
-    @Task(image="python:3.10")
+    @dsl.Task(image="python:3.10")
     def say_hello(name: str):
         return f"hello {name}"
 
-    @DAG()
+    @dsl.DAG()
     def command_hello(name):
         return say_hello(name)
 
@@ -19,11 +19,11 @@ def test_workflow_tempalte():
 
 
 def test_workflow_tempalte_arguments():
-    @Task(image="python:3.10")
+    @dsl.Task(image="python:3.10")
     def say_hello(name: str):
         return f"hello {name}"
 
-    @DAG()
+    @dsl.DAG()
     def command_hello(name):
         return say_hello(name)
 

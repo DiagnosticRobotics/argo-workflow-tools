@@ -1,24 +1,49 @@
 import pytest
 import yaml
 
-from argo_workflow_tools import DAG, Task, Workflow
+from argo_workflow_tools import dsl, Workflow
 
 
-@Task(image="python:3.10")
+@dsl.Task(image="python:3.10")
 def say_hello(name: str):
     message = f"hello {name}"
     return message
 
 
-@DAG()
+@dsl.DAG()
 def command_hello(name):
     message = say_hello(name)
+    return message
+
+
+@dsl.Task(image="python:3.9")
+def create_data(name: str):
+    message = f"hello {name}"
+    return message
+
+
+@dsl.Task(image="python:3.9")
+def print_data(message: str):
+    print(message)
+
+
+@dsl.DAG()
+def simple_workflow(name):
+    message = create_data(name)
+    print_data(message)
     return message
 
 
 def test_diamond_params_run_independently():
     result = say_hello("Brian")
     assert result == "hello Brian"
+
+
+def test_diammond_params_dag():
+    workflow = Workflow(
+        name="hello-world", entrypoint=simple_workflow, arguments={"name": "Brian"}
+    )
+    print(workflow.to_yaml())
 
 
 def test_diamond_params_dag():

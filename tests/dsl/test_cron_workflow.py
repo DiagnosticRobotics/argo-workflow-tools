@@ -1,14 +1,14 @@
-from argo_workflow_tools import DAG, CronWorkflow, Task, Workflow
+from argo_workflow_tools import dsl, CronWorkflow, Workflow
 
 
-@Task(image="python:3.10")
+@dsl.Task(image="python:3.10")
 def say_hello(name: str):
     message = f"hello {name}"
     print(message)
     return message
 
 
-@DAG()
+@dsl.DAG()
 def command_hello(name):
     message = say_hello(name)
     print(message)
