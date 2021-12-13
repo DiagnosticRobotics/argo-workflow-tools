@@ -7,6 +7,7 @@ from argo_workflow_tools.dsl.utils.path_builder import (
     parameter_path,
     with_item_path,
 )
+from argo_workflow_tools.dsl.utils.utils import convert_str
 
 
 class SourceType(Enum):
@@ -39,8 +40,8 @@ class InputDefinition:
         self.reference = references
         self.parameter_builder = parameter_builder
         self.key_name = key_name
-        self.value = value
-        self.default = default
+        self.value = convert_str(value)
+        self.default = convert_str(default)
 
     @property
     def is_node_output(self):

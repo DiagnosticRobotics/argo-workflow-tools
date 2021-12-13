@@ -198,7 +198,11 @@ class DAGNode(Node):
 
         arguments = self._bind_arguments(*args, **kwargs)
         partitioned_arguments = list(
-            filter(lambda argument: argument.is_partition, arguments.values())
+            filter(
+                lambda argument: isinstance(argument, InputDefinition)
+                and argument.is_partition,
+                arguments.values(),
+            )
         )
         if len(partitioned_arguments) > 1:
             raise ValueError(
@@ -277,7 +281,11 @@ class TaskNode(Node):
 
         arguments = self._bind_arguments(*args, **kwargs)
         partitioned_arguments = list(
-            filter(lambda argument: argument.is_partition, arguments.values())
+            filter(
+                lambda argument: isinstance(argument, InputDefinition)
+                and argument.is_partition,
+                arguments.values(),
+            )
         )
         if len(partitioned_arguments) > 1:
             raise ValueError(

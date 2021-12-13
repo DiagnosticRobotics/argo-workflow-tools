@@ -1,4 +1,5 @@
 from typing import Union, List, Dict, Tuple
+import json
 
 import shortuuid
 from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
@@ -70,6 +71,16 @@ def sanitize_name(name: str) -> str:
     if name is None:
         return None
     return name.replace("_", "-")
+
+
+def convert_str(value: any) -> str:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, str):
+        return value
+    return json.dumps(value)
 
 
 def uuid_short():

@@ -1,6 +1,7 @@
 import inspect
 import os
 from contextvars import copy_context
+from itertools import groupby
 from typing import Mapping, Optional, Union, Dict, List
 
 from argo_workflow_tools.dsl import building_mode_context, workflow_template_collector
@@ -130,7 +131,25 @@ def _fill_dag_metadata(task_template: argo.Template, properties: DAGNodeProperti
     return task_template
 
 
-def _build_with(params: List[InputDefinition]) -> Optional[str]:
+def _generate_task_name_from_node_uid(nodes: List[NodeReference]) -> Dict[str, str]:
+    node_names_by_id = {}
+    # groupby only groups consecutive elements therefore we need to sort them by name
+    # first
+    sorted_nodes = sorted(nodes, key=lambda node_reference: node_reference.name)
+    for name, group in groupby(
+        sorted_nodes, key=lambda node_reference: node_reference.name
+    ):
+        duplicate_nodes = list(group)
+
+        if len(duplicate_nodes) == 1:
+            node_names_by_id[duplicate_nodes[0].id] = name
+        else:
+            for i in range(0, len(duplicate_nodes)):
+                node_names_by_id[duplicate_nodes[i].id] = f"{name}-{i+1}"
+    return node_names_by_id
+
+
+def _build_with(params: List[InputDefinition],unique_node_names_map: Dict[str, str]) -> Optional[str]:
     """
     builds "with" param for loop DAGs by analyzing the inputs and looking iterable inputs.
     Parameters
@@ -157,7 +176,9 @@ def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
     return "&&".join(condition_expr)
 
 
-def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
+def _build_dag_task(
+    dag_task: NodeReference, unique_node_names_map: Dict[str, str]
+) -> argo.DagTask:
     dependencies = set(
         filter(
             lambda dependency: dependency,
@@ -171,7 +192,7 @@ def _build_dag_task(dag_task: NodeReference) -> argo.DagTask:
             ],
         )
     )
-    with_param = _build_with(dag_task.arguments.values())
+    with_param = _build_with(dag_task.arguments.values(),unique_node_names_map)
     arguments = [
         _build_node_input(input_name, input_type)
         for input_name, input_type in dag_task.arguments.items()
@@ -365,12 +386,13 @@ def _build_dag_template(node: DAGNode) -> argo.Template:
         for input_name, input_type in parameters.items()
     ]
 
+    unique_node_names_map = _generate_task_name_from_node_uid(dag_tasks)
     dag_outputs = _build_dag_outputs(dag_output)
 
-    dag_tasks = [_build_dag_task(dag_task) for dag_task in dag_tasks]
+    tasks = [_build_dag_task(dag_task, unique_node_names_map) for dag_task in dag_tasks]
 
     dag_tamplate = argo.Template(
-        dag=argo.DagTemplate(tasks=list(dag_tasks)),
+        dag=argo.DagTemplate(tasks=list(tasks)),
         name=sanitize_name(node.func.__name__),
         outputs=get_outputs(dag_outputs),
         inputs=get_inputs(dag_inputs),
