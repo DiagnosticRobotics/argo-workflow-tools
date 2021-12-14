@@ -1,6 +1,6 @@
 def parameter_path(name: str, key: str = None) -> str:
     if key:
-        return f"{{{{inputs.parameters.{name}.{key}}}}}"
+        return f"{{{{= jsonpath(inputs.parameters['{name}'], '$.{key}') }}}}"
     return f"{{{{inputs.parameters.{name}}}}}"
 
 

@@ -24,15 +24,15 @@ class SourceType(Enum):
 
 class InputDefinition:
     def __init__(
-        self,
-        source_type: SourceType,
-        name: str,
-        source_node_id: str = None,
-        references: Optional["InputDefinition"] = None,
-        parameter_builder: ParameterBuilder = None,
-        key_name: str = None,
-        value: str = None,
-        default: any = None,
+            self,
+            source_type: SourceType,
+            name: str,
+            source_node_id: str = None,
+            references: Optional["InputDefinition"] = None,
+            parameter_builder: ParameterBuilder = None,
+            key_name: str = None,
+            value: str = None,
+            default: any = None,
     ):
         self.source_type = source_type
         self.name = name
@@ -48,6 +48,10 @@ class InputDefinition:
         return self.source_node_id is not None
 
     @property
+    def is_const(self):
+        return self.value is not None
+
+    @property
     def is_partition(self):
         if self.source_type == SourceType.PARTITION:
             return True
@@ -61,8 +65,8 @@ class InputDefinition:
     @property
     def key_path(self):
         if (
-            self.source_type == SourceType.KEY
-            or self.source_type == SourceType.PROPERTY
+                self.source_type == SourceType.KEY
+                or self.source_type == SourceType.PROPERTY
         ):
             key_path = self.reference.key_path
             if key_path:
@@ -82,26 +86,21 @@ class InputDefinition:
     def path(self) -> str:
         if self.is_partition:
             return with_item_path(self.key_path)
-        else:
-            if self.is_node_output:
-                return task_output_path(self.source_node_id, self.name, self.key_name)
-            else:
-                if self.source_type == SourceType.PARAMETER:
-                    return parameter_path(self.name, self.key_path)
-                else:
-                    return self.value
+        if self.is_node_output:
+            return task_output_path(self.source_node_id, self.name, self.key_name)
+        if self.is_const:
+            return self.value
+        return parameter_path(self.name, self.key_path)
 
     def with_path(self) -> str:
-        if self.is_partition:
-            if self.is_node_output:
-                return task_output_path(self.source_node_id, self.name, self.key_path)
-            else:
-                if self.source_type == SourceType.PARAMETER:
-                    return parameter_path(self.name, self.key_path)
-                else:
-                    return self.value
-        else:
+        if not self.is_partition:
             return None
+        if self.is_node_output:
+            return task_output_path(self.source_node_id, self.name, self.key_path)
+        if self.is_const:
+            raise ValueError(f"'{self.name}' is a const value."
+                             f" you can only iterate over parameters or previous task outputs")
+        return parameter_path(self.name, self.key_path)
 
     def __iter__(self) -> Iterator:
         return iter(
@@ -117,8 +116,8 @@ class InputDefinition:
 
     def __getitem__(self, name) -> "InputDefinition":
         if (
-            self.source_type == SourceType.KEY
-            or self.source_type == SourceType.PROPERTY
+                self.source_type == SourceType.KEY
+                or self.source_type == SourceType.PROPERTY
         ):
             raise ValueError(
                 f"You are trying to call item '{name}' under '{self.key_name}'. "

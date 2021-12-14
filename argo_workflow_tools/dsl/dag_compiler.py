@@ -173,7 +173,7 @@ def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
     if not conditions or len(conditions) == 0:
         return None
 
-    condition_expr = [condition for condition in conditions]
+    condition_expr = [condition.condition_string() for condition in conditions]
 
     return "&&".join(condition_expr)
 

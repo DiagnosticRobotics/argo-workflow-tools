@@ -42,7 +42,7 @@ def pop_condition() -> None:
 
 
 def collect_conditions() -> any:
-    return _conditions.get([])
+    return _conditions.get([]).copy()
 
 
 _workflow_templates: ContextVar[List[Template]] = ContextVar("workflow_templates")
