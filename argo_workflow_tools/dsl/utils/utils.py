@@ -29,7 +29,7 @@ def _convert_params(
 ) -> Tuple[List[argo.Artifact], List[argo.Parameter]]:
     if isinstance(args, dict):
         parameters = [
-            argo.Parameter(name=sanitize_name(key), value=value)
+            argo.Parameter(name=sanitize_name(key,snake_case=True), value=value)
             for key, value in args.items()
         ]
         artifacts = []
@@ -67,9 +67,12 @@ def get_outputs(
     return argo.Outputs(parameters=parameters, artifacts=artifacts)
 
 
-def sanitize_name(name: str) -> str:
+def sanitize_name(name: str,snake_case=False) -> str:
     if name is None:
         return None
+    if snake_case:
+        return name
+        #return name.replace("-", "_")
     return name.replace("_", "-")
 
 

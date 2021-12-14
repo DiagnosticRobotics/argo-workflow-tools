@@ -145,11 +145,13 @@ def _generate_task_name_from_node_uid(nodes: List[NodeReference]) -> Dict[str, s
             node_names_by_id[duplicate_nodes[0].id] = name
         else:
             for i in range(0, len(duplicate_nodes)):
-                node_names_by_id[duplicate_nodes[i].id] = f"{name}-{i+1}"
+                node_names_by_id[duplicate_nodes[i].id] = f"{name}-{i + 1}"
     return node_names_by_id
 
 
-def _build_with(params: List[InputDefinition],unique_node_names_map: Dict[str, str]) -> Optional[str]:
+def _build_with(
+    params: List[InputDefinition], unique_node_names_map: Dict[str, str]
+) -> Optional[str]:
     """
     builds "with" param for loop DAGs by analyzing the inputs and looking iterable inputs.
     Parameters
@@ -179,6 +181,10 @@ def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
 def _build_dag_task(
     dag_task: NodeReference, unique_node_names_map: Dict[str, str]
 ) -> argo.DagTask:
+    potential_deps = list(dag_task.arguments.values())
+    potential_deps.append(list()
+                    if dag_task.wait_for is None
+                    else dag_task.wait_for)
     dependencies = set(
         filter(
             lambda dependency: dependency,
@@ -187,12 +193,12 @@ def _build_dag_task(
                 for input_dep in filter(
                     lambda x: isinstance(x, InputDefinition)
                     and not x.source_type == SourceType.PARAMETER,
-                    list(dag_task.arguments.values()) + dag_task.wait_for,
+                    potential_deps
                 )
             ],
         )
     )
-    with_param = _build_with(dag_task.arguments.values(),unique_node_names_map)
+    with_param = _build_with(dag_task.arguments.values(), unique_node_names_map)
     arguments = [
         _build_node_input(input_name, input_type)
         for input_name, input_type in dag_task.arguments.items()
@@ -238,7 +244,7 @@ def _build_dag_task(
 
 
 def _build_node_input(input_name: str, input_def: InputDefinition) -> argo.Parameter:
-    return argo.Parameter(name=sanitize_name(input_name), value=input_def.path())
+    return argo.Parameter(name=sanitize_name(input_name,snake_case=True), value=input_def.path())
 
 
 def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
@@ -247,7 +253,7 @@ def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
     """
     if parameter.source_type == SourceType.PARAMETER:
         argo_parameter = argo.Parameter(
-            name=sanitize_name(parameter.name), default=parameter.default
+            name=sanitize_name(parameter.name,snake_case=True), default=parameter.default
         )
         return argo_parameter
     else:
@@ -284,7 +290,7 @@ def _build_dag_outputs(
 
     return [
         argo.Parameter(
-            name=output.name,
+            name=output_name,
             valueFrom=argo.ValueFrom(parameter=output.path()),
         )
         for output_name, output in outputs.items()
@@ -306,7 +312,7 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
     parameters = {
         param_name: InputDefinition(
             source_type=SourceType.PARAMETER,
-            name=sanitize_name(param_name),
+            name=sanitize_name(param_name,snake_case=True),
             default=None
             if isinstance(param_definition.default, type)
             and param_definition.default.__name__ == "_empty"
@@ -367,7 +373,7 @@ def _build_dag_template(node: DAGNode) -> argo.Template:
     parameters = {
         param_name: InputDefinition(
             source_type=SourceType.PARAMETER,
-            name=sanitize_name(param_name),
+            name=sanitize_name(param_name,snake_case=True),
             default=None
             if isinstance(param_definition.default, type)
             and param_definition.default.__name__ == "_empty"

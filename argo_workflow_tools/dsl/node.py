@@ -113,7 +113,7 @@ class Node(object):
         ):
             return InputDefinition(
                 SourceType.REDUCE,
-                name=sanitize_name(arg[0].name),
+                name=sanitize_name(arg[0].name,snake_case=True),
                 source_node_id=arg[0].source_node_id,
                 references=arg[0],
             )
@@ -214,7 +214,7 @@ class DAGNode(Node):
                 "result": InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
-                    name=sanitize_name("result"),
+                    name=sanitize_name("result",snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=self.properties.outputs.get(
                         "result", DefaultParameterBuilder(None)
@@ -226,7 +226,7 @@ class DAGNode(Node):
                 name: InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
-                    name=sanitize_name(name),
+                    name=sanitize_name(name,snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=parameter_builder,
                 )
@@ -300,7 +300,7 @@ class TaskNode(Node):
                 "result": InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
-                    name=sanitize_name("result"),
+                    name=sanitize_name("result",snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=self.properties.outputs.get(
                         "result", DefaultParameterBuilder(None)
@@ -312,7 +312,7 @@ class TaskNode(Node):
                 name: InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
-                    name=sanitize_name(name),
+                    name=sanitize_name(name,snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=parameter_builder,
                 )
@@ -383,7 +383,7 @@ class WorkflowTemplateNode(DAGNode):
                 "result": InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
-                    name=sanitize_name("result"),
+                    name=sanitize_name("result",snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=self.properties.outputs.get(
                         "result", DefaultParameterBuilder(None)
@@ -395,7 +395,7 @@ class WorkflowTemplateNode(DAGNode):
                 name: InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
-                    name=sanitize_name(name),
+                    name=sanitize_name(name,snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=parameter_builder,
                 )
