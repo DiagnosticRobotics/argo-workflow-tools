@@ -292,9 +292,7 @@ class TaskNode(Node):
                 "Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead"
             )
         guid = sanitize_name(self._func.__name__) + "-" + uuid_short()
-        conditions = [
-            condition.condition_string() for condition in collect_conditions()
-        ]
+        conditions = collect_conditions()
         if len(self.properties.outputs.items()) == 0:
             outputs = {
                 "result": InputDefinition(
