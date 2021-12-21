@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, List
 from typing import Set
 
 from argo_workflow_tools.dsl.parameter_builders.parameter_builder import (
@@ -38,6 +38,10 @@ class DefaultParameterBuilder(ParameterBuilder):
         if self.type_annotation == float:
             return (
                 f"{variable_name}=float('{{{{inputs.parameters.{parameter_name}}}}}')"
+            )
+        if self.type_annotation == list:
+            return (
+                f"{variable_name}=list({{{{inputs.parameters.{parameter_name}}}}})"
             )
         return (
             f"{variable_name}=json.loads('{{{{inputs.parameters.{parameter_name}}}}}')"

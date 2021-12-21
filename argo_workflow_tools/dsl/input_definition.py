@@ -87,7 +87,7 @@ class InputDefinition:
         if self.is_partition:
             return with_item_path(self.key_path)
         if self.is_node_output:
-            return task_output_path(self.source_node_id, self.name, self.key_name)
+            return task_output_path(self.source_node_id, self.name, self.key_path)
         if self.is_const:
             return self.value
         return parameter_path(self.name, self.key_path)
@@ -115,14 +115,6 @@ class InputDefinition:
         )
 
     def __getitem__(self, name) -> "InputDefinition":
-        if (
-                self.source_type == SourceType.KEY
-                or self.source_type == SourceType.PROPERTY
-        ):
-            raise ValueError(
-                f"You are trying to call item '{name}' under '{self.key_name}'. "
-                f"Argo allows only one level of field extraction"
-            )
         return InputDefinition(
             source_type=SourceType.KEY,
             name=self.name,

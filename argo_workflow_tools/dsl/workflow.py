@@ -49,6 +49,7 @@ class WorkflowTemplate:
         spec = compile_dag(self.entrypoint, self.on_exit)
         spec.arguments = get_arguments(self.arguments)
         return argo.WorkflowTemplate(
+            apiVersion="argoproj.io/v1alpha1",
             kind="WorkflowTemplate",
             metadata=k8s_v1.ObjectMeta(
                 name=self.name,
@@ -120,6 +121,7 @@ class CronWorkflow:
             concurrencyPolicy=self.concurrency_policy,
         )
         return argo.CronWorkflow(
+            apiVersion="argoproj.io/v1alpha1",
             kind="CronWorkflow",
             metadata=k8s_v1.ObjectMeta(
                 name=self.name,
@@ -175,6 +177,7 @@ class Workflow:
         spec = compile_dag(self.entrypoint, self.on_exit)
         spec.arguments = get_arguments(self.arguments)
         workflow = argo.Workflow(
+            apiVersion="argoproj.io/v1alpha1",
             kind="Workflow",
             metadata=k8s_v1.ObjectMeta(
                 name=self.name,
