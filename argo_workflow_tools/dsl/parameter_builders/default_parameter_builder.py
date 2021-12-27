@@ -40,9 +40,7 @@ class DefaultParameterBuilder(ParameterBuilder):
                 f"{variable_name}=float('{{{{inputs.parameters.{parameter_name}}}}}')"
             )
         if self.type_annotation == list:
-            return (
-                f"{variable_name}=list({{{{inputs.parameters.{parameter_name}}}}})"
-            )
+            return f"{variable_name}=list({{{{inputs.parameters.{parameter_name}}}}})"
         return (
             f"{variable_name}=json.loads('{{{{inputs.parameters.{parameter_name}}}}}')"
         )

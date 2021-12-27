@@ -35,6 +35,7 @@ def simple_workflow(name):
     print_data(message)
     return message
 
+
 def test_diamond_params_dag():
     workflow = Workflow(
         name="hello-world", entrypoint=command_hello, arguments={"name": "Brian"}

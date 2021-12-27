@@ -47,6 +47,8 @@ def DAG(
 
 def WorkflowTemplate(
     name: str,
+    namespace: str = None,
+    arguments: dict = None,
     inputs: Dict[str, ParameterBuilder] = None,
     outputs: Dict[str, ParameterBuilder] = None,
     active_deadline_seconds: int = None,
@@ -60,11 +62,14 @@ def WorkflowTemplate(
         inputs = {}
     if outputs is None:
         outputs = {}
-
+    if arguments is None:
+        arguments = {}
     def decorator(func: Callable) -> DAGNode:
         return WorkflowTemplateNode(
             func,
             name=name,
+            namespace=namespace,
+            arguments=arguments,
             properties=DAGNodeProperties(
                 active_deadline_seconds=active_deadline_seconds,
                 fail_fast=fail_fast,

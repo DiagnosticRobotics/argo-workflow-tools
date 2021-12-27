@@ -24,15 +24,15 @@ class SourceType(Enum):
 
 class InputDefinition:
     def __init__(
-            self,
-            source_type: SourceType,
-            name: str,
-            source_node_id: str = None,
-            references: Optional["InputDefinition"] = None,
-            parameter_builder: ParameterBuilder = None,
-            key_name: str = None,
-            value: str = None,
-            default: any = None,
+        self,
+        source_type: SourceType,
+        name: str,
+        source_node_id: str = None,
+        references: Optional["InputDefinition"] = None,
+        parameter_builder: ParameterBuilder = None,
+        key_name: str = None,
+        value: str = None,
+        default: any = None,
     ):
         self.source_type = source_type
         self.name = name
@@ -52,6 +52,15 @@ class InputDefinition:
         return self.value is not None
 
     @property
+    def is_sequence(self):
+        if self.source_type == SourceType.SEQUENCE:
+            return True
+        if self.source_type == SourceType.REDUCE:
+            return False
+        else:
+            return False
+
+    @property
     def is_partition(self):
         if self.source_type == SourceType.PARTITION:
             return True
@@ -65,8 +74,8 @@ class InputDefinition:
     @property
     def key_path(self):
         if (
-                self.source_type == SourceType.KEY
-                or self.source_type == SourceType.PROPERTY
+            self.source_type == SourceType.KEY
+            or self.source_type == SourceType.PROPERTY
         ):
             key_path = self.reference.key_path
             if key_path:
@@ -83,14 +92,16 @@ class InputDefinition:
         else:
             return self
 
-    def path(self) -> str:
+    def path(self, as_const=False) -> str:
         if self.is_partition:
             return with_item_path(self.key_path)
         if self.is_node_output:
-            return task_output_path(self.source_node_id, self.name, self.key_path)
+            return task_output_path(
+                self.source_node_id, self.name, self.key_path, unpack_json=as_const
+            )
         if self.is_const:
             return self.value
-        return parameter_path(self.name, self.key_path)
+        return parameter_path(self.name, self.key_path, unpack_json=as_const)
 
     def with_path(self) -> str:
         if not self.is_partition:
@@ -98,8 +109,10 @@ class InputDefinition:
         if self.is_node_output:
             return task_output_path(self.source_node_id, self.name, self.key_path)
         if self.is_const:
-            raise ValueError(f"'{self.name}' is a const value."
-                             f" you can only iterate over parameters or previous task outputs")
+            raise ValueError(
+                f"'{self.name}' is a const value."
+                f" you can only iterate over parameters or previous task outputs"
+            )
         return parameter_path(self.name, self.key_path)
 
     def __iter__(self) -> Iterator:
