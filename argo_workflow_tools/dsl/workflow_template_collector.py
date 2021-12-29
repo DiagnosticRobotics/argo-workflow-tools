@@ -19,7 +19,7 @@ def add_task(node_reference: NodeReference) -> None:
     dag_tasks.set(tasks)
 
 
-def collect_tasks() -> list[NodeReference]:
+def collect_tasks() -> List[NodeReference]:
     """
     return collected tasks in the current node context
     """
@@ -42,7 +42,7 @@ def pop_condition() -> None:
 
 
 def collect_conditions() -> any:
-    return _conditions.get([])
+    return _conditions.get([]).copy()
 
 
 _workflow_templates: ContextVar[List[Template]] = ContextVar("workflow_templates")

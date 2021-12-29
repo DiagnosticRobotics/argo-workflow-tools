@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Mapping, Union
+from typing import Callable, Mapping, Union, List
 
 from argo_workflow_tools.dsl.input_definition import InputDefinition
 from argo_workflow_tools.dsl.node_properties import (
@@ -20,8 +20,8 @@ class NodeReference(object):
     func: Callable
     node: str
     arguments: Mapping[str, Union[InputDefinition]]
-    wait_for: list[InputDefinition]
-    conditions: list[any]
+    wait_for: List[InputDefinition]
+    conditions: List[any]
 
 
 @dataclass
@@ -43,3 +43,16 @@ class TaskReference(NodeReference):
 
     def __repr__(self):
         return f"TaskReference(name={self.name} id={self.id})"
+
+
+@dataclass
+class WorkflowTemplateReference(NodeReference):
+    """
+    Represents a result referece from a called task
+    """
+
+    workflow_template_name: str
+    properties: DAGNodeProperties
+
+    def __repr__(self):
+        return f"WorkflowTemplateReference(name={self.name} id={self.id})"

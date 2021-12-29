@@ -7,6 +7,7 @@ from argo_workflow_tools.dsl.utils.path_builder import (
     parameter_path,
     with_item_path,
 )
+from argo_workflow_tools.dsl.utils.utils import convert_str
 
 
 class SourceType(Enum):
@@ -18,6 +19,7 @@ class SourceType(Enum):
     KEY = "key"
     PROPERTY = "property"
     BRANCH = "branch"
+    CONST = "const"
 
 
 class InputDefinition:
@@ -29,6 +31,8 @@ class InputDefinition:
         references: Optional["InputDefinition"] = None,
         parameter_builder: ParameterBuilder = None,
         key_name: str = None,
+        value: str = None,
+        default: any = None,
     ):
         self.source_type = source_type
         self.name = name
@@ -36,10 +40,25 @@ class InputDefinition:
         self.reference = references
         self.parameter_builder = parameter_builder
         self.key_name = key_name
+        self.value = convert_str(value)
+        self.default = convert_str(default)
 
     @property
     def is_node_output(self):
         return self.source_node_id is not None
+
+    @property
+    def is_const(self):
+        return self.value is not None
+
+    @property
+    def is_sequence(self):
+        if self.source_type == SourceType.SEQUENCE:
+            return True
+        if self.source_type == SourceType.REDUCE:
+            return False
+        else:
+            return False
 
     @property
     def is_partition(self):
@@ -73,23 +92,28 @@ class InputDefinition:
         else:
             return self
 
-    def path(self) -> str:
+    def path(self, as_const=False) -> str:
         if self.is_partition:
             return with_item_path(self.key_path)
-        else:
-            if self.is_node_output:
-                return task_output_path(self.source_node_id, self.name, self.key_name)
-            else:
-                return parameter_path(self.name, self.key_path)
+        if self.is_node_output:
+            return task_output_path(
+                self.source_node_id, self.name, self.key_path, unpack_json=as_const
+            )
+        if self.is_const:
+            return self.value
+        return parameter_path(self.name, self.key_path, unpack_json=as_const)
 
     def with_path(self) -> str:
-        if self.is_partition:
-            if self.is_node_output:
-                return task_output_path(self.source_node_id, self.name, self.key_path)
-            else:
-                return parameter_path(self.name, self.key_path)
-        else:
+        if not self.is_partition:
             return None
+        if self.is_node_output:
+            return task_output_path(self.source_node_id, self.name, self.key_path)
+        if self.is_const:
+            raise ValueError(
+                f"'{self.name}' is a const value."
+                f" you can only iterate over parameters or previous task outputs"
+            )
+        return parameter_path(self.name, self.key_path)
 
     def __iter__(self) -> Iterator:
         return iter(
@@ -104,14 +128,6 @@ class InputDefinition:
         )
 
     def __getitem__(self, name) -> "InputDefinition":
-        if (
-            self.source_type == SourceType.KEY
-            or self.source_type == SourceType.PROPERTY
-        ):
-            raise ValueError(
-                f"You are trying to call item '{name}' under '{self.key_name}'. "
-                f"Argo allows only one level of field extraction"
-            )
         return InputDefinition(
             source_type=SourceType.KEY,
             name=self.name,

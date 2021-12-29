@@ -1,9 +1,13 @@
 import inspect
 from abc import abstractmethod
-from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, cast
+from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, cast, List
 
 from argo_workflow_tools.dsl import building_mode_context as context
-from argo_workflow_tools.dsl.dag_task import DAGReference, TaskReference
+from argo_workflow_tools.dsl.dag_task import (
+    DAGReference,
+    TaskReference,
+    WorkflowTemplateReference,
+)
 from argo_workflow_tools.dsl.input_definition import InputDefinition, SourceType
 from argo_workflow_tools.dsl.node_properties.dag_node_properties import (
     DAGNodeProperties,
@@ -71,7 +75,7 @@ class Node(object):
         return filtered_kwargs
 
     @staticmethod
-    def _get_wait(kwargs) -> list["str"]:
+    def _get_wait(kwargs) -> List["str"]:
         """
         Generaete dependecy out of wait_for parameter
         Parameters
@@ -87,7 +91,7 @@ class Node(object):
             return []
         dependencies = cast(InputDefinition, kwargs.get("wait_for"))
         if (
-                isinstance(dependencies, InputDefinition) and dependencies.is_node_output
+            isinstance(dependencies, InputDefinition) and dependencies.is_node_output
         ):  # TODO or it's variants NODE_OUTPUT
             return [dependencies]
         if isinstance(dependencies, Iterable):
@@ -101,20 +105,24 @@ class Node(object):
     @staticmethod
     def _reduce_fan_in_arguments(name: str, arg: Any) -> Any:
         if (
-                isinstance(arg, Sequence)
-                and len(arg) == 1
-                and isinstance(arg[0], InputDefinition)
-                and arg[0].is_node_output
-                and arg[0].reference
+            isinstance(arg, Sequence)
+            and len(arg) == 1
+            and isinstance(arg[0], InputDefinition)
+            and arg[0].is_node_output
+            and arg[0].reference
         ):
             return InputDefinition(
                 SourceType.REDUCE,
-                name=sanitize_name(arg[0].name),
+                name=sanitize_name(arg[0].name, snake_case=True),
                 source_node_id=arg[0].source_node_id,
                 references=arg[0],
             )
 
-        if isinstance(arg, Sequence) and any([item.is_node_output for item in arg]):
+        if (
+            not isinstance(arg, str)
+            and isinstance(arg, Sequence)
+            and any([item.is_node_output for item in arg])
+        ):
             raise ValueError(
                 f"Argument '{name}' of type '{type(arg).__name__}' is invalid. it mixes both parameters and node outputs"
             )
@@ -146,11 +154,18 @@ class Node(object):
         return {k: self._reduce_fan_in_arguments(k, v) for k, v in arguments.items()}
 
     @staticmethod
+    def _get_arg(argument_name: str, argument_value: Any) -> InputDefinition:
+        if isinstance(argument_value, InputDefinition):
+            return argument_value
+        return InputDefinition(
+            source_type=SourceType.CONST, value=argument_value, name=argument_name
+        )
+
+    @staticmethod
     def _arguments(arguments: Mapping[str, Any]) -> Mapping[str, InputDefinition]:
         return {
-            argument_name: argument_value
+            argument_name: Node._get_arg(argument_name, argument_value)
             for argument_name, argument_value in arguments.items()
-            if isinstance(argument_value, InputDefinition)
         }
 
 
@@ -183,7 +198,11 @@ class DAGNode(Node):
 
         arguments = self._bind_arguments(*args, **kwargs)
         partitioned_arguments = list(
-            filter(lambda argument: argument.is_partition, arguments.values())
+            filter(
+                lambda argument: isinstance(argument, InputDefinition)
+                and argument.is_partition,
+                arguments.values(),
+            )
         )
         if len(partitioned_arguments) > 1:
             raise ValueError(
@@ -191,30 +210,29 @@ class DAGNode(Node):
             )
 
         if len(self.properties.outputs.items()) == 0:
-            outputs = {"result": InputDefinition(
-                source_type=SourceType.NODE_OUTPUT,
-                source_node_id=guid,
-                name=sanitize_name("result"),
-                references=partitioned_arguments,
-                parameter_builder=self.properties.outputs.get(
-                    "result", DefaultParameterBuilder(None)
-                ),
-            )}
+            outputs = {
+                "result": InputDefinition(
+                    source_type=SourceType.NODE_OUTPUT,
+                    source_node_id=guid,
+                    name=sanitize_name("result", snake_case=True),
+                    references=partitioned_arguments,
+                    parameter_builder=self.properties.outputs.get(
+                        "result", DefaultParameterBuilder(None)
+                    ),
+                )
+            }
         else:
             outputs = {
                 name: InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
-                    name=sanitize_name(name),
+                    name=sanitize_name(name, snake_case=True),
                     references=partitioned_arguments,
-                    parameter_builder=parameter_builder
+                    parameter_builder=parameter_builder,
                 )
                 for name, parameter_builder in self.properties.outputs.items()
             }
 
-        output = InputDefinition(
-            source_type=SourceType.NODE_OUTPUT, source_node_id=guid, name="result"
-        )
         conditions = collect_conditions()
 
         add_task(
@@ -234,7 +252,6 @@ class DAGNode(Node):
             return list(outputs.values())[0]
         else:
             return outputs
-
 
 
 class TaskNode(Node):
@@ -264,34 +281,38 @@ class TaskNode(Node):
 
         arguments = self._bind_arguments(*args, **kwargs)
         partitioned_arguments = list(
-            filter(lambda argument: argument.is_partition, arguments.values())
+            filter(
+                lambda argument: isinstance(argument, InputDefinition)
+                and argument.is_partition,
+                arguments.values(),
+            )
         )
         if len(partitioned_arguments) > 1:
             raise ValueError(
                 "Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead"
             )
         guid = sanitize_name(self._func.__name__) + "-" + uuid_short()
-        conditions = [
-            condition.condition_string() for condition in collect_conditions()
-        ]
+        conditions = collect_conditions()
         if len(self.properties.outputs.items()) == 0:
-            outputs = {"result": InputDefinition(
-                source_type=SourceType.NODE_OUTPUT,
-                source_node_id=guid,
-                name=sanitize_name("result"),
-                references=partitioned_arguments,
-                parameter_builder=self.properties.outputs.get(
-                    "result", DefaultParameterBuilder(None)
-                ),
-            )}
+            outputs = {
+                "result": InputDefinition(
+                    source_type=SourceType.NODE_OUTPUT,
+                    source_node_id=guid,
+                    name=sanitize_name("result", snake_case=True),
+                    references=partitioned_arguments,
+                    parameter_builder=self.properties.outputs.get(
+                        "result", DefaultParameterBuilder(None)
+                    ),
+                )
+            }
         else:
             outputs = {
                 name: InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
-                    name=sanitize_name(name),
+                    name=sanitize_name(name, snake_case=True),
                     references=partitioned_arguments,
-                    parameter_builder=parameter_builder
+                    parameter_builder=parameter_builder,
                 )
                 for name, parameter_builder in self.properties.outputs.items()
             }
@@ -306,6 +327,104 @@ class TaskNode(Node):
                 outputs=outputs,
                 properties=self.properties,
                 node=self,
+                conditions=conditions,
+            ),
+        )
+        if len(outputs.items()) == 1:
+            return list(outputs.values())[0]
+        else:
+            return outputs
+
+
+class WorkflowTemplateNode(DAGNode):
+    def __init__(
+        self,
+        func: Callable,
+        name: str,
+        properties: DAGNodeProperties,
+        namespace: str = None,
+        on_exit: Callable = None,
+        arguments: dict = None,
+    ):
+
+        """
+        reporesents a WorkflowTempalte node in the workflow graph
+        Parameters
+        ----------
+        func : function describing the DAG
+        properties : argo properties for DAG
+        """
+        self.name = name
+        self.namespace = namespace
+        self.arguments = arguments
+        self.on_exit = on_exit
+        super().__init__(func, properties)
+
+    def __call__(self, *args, **kwargs) -> Any:
+        """
+        call the DAG function, in case we are not in DSL compilation mode, the function will call the function.
+        else the fucntion will return a reference response representing the node response
+        """
+        if not context.dag_building_mode.get():
+            cleaned_kwargs = self._filter_dag_args(kwargs)
+            conditions = collect_conditions()
+            if all([condition.value for condition in conditions]):
+                return self._func(*args, **cleaned_kwargs)
+            else:
+                return None
+
+        guid = sanitize_name(self._func.__name__) + "-" + uuid_short()
+
+        arguments = self._bind_arguments(*args, **kwargs)
+        partitioned_arguments = list(
+            filter(
+                lambda argument: isinstance(argument, InputDefinition)
+                and argument.is_partition,
+                arguments.values(),
+            )
+        )
+        if len(partitioned_arguments) > 1:
+            raise ValueError(
+                "Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead"
+            )
+
+        if len(self.properties.outputs.items()) == 0:
+            outputs = {
+                "result": InputDefinition(
+                    source_type=SourceType.NODE_OUTPUT,
+                    source_node_id=guid,
+                    name=sanitize_name("result", snake_case=True),
+                    references=partitioned_arguments,
+                    parameter_builder=self.properties.outputs.get(
+                        "result", DefaultParameterBuilder(None)
+                    ),
+                )
+            }
+        else:
+            outputs = {
+                name: InputDefinition(
+                    source_type=SourceType.NODE_OUTPUT,
+                    source_node_id=guid,
+                    name=sanitize_name(name, snake_case=True),
+                    references=partitioned_arguments,
+                    parameter_builder=parameter_builder,
+                )
+                for name, parameter_builder in self.properties.outputs.items()
+            }
+
+        conditions = collect_conditions()
+
+        add_task(
+            WorkflowTemplateReference(
+                workflow_template_name=self.name,
+                id=guid,
+                name=sanitize_name(self._func.__name__),
+                func=self._func,
+                wait_for=self._get_wait(kwargs),
+                arguments=self._arguments(arguments),
+                outputs=outputs,
+                node=self,
+                properties=self.properties,
                 conditions=conditions,
             ),
         )

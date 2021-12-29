@@ -1,4 +1,5 @@
-from typing import Union
+from typing import Union, List, Dict, Tuple
+import json
 
 import shortuuid
 from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
@@ -24,11 +25,11 @@ def delete_none(_dict: dict) -> dict:
 
 
 def _convert_params(
-    args: Union[dict[str, str], list[Union[argo.Arguments, argo.Parameter]]]
-) -> tuple[list[argo.Artifact], list[argo.Parameter]]:
+    args: Union[Dict[str, str], List[Union[argo.Arguments, argo.Parameter]]]
+) -> Tuple[List[argo.Artifact], List[argo.Parameter]]:
     if isinstance(args, dict):
         parameters = [
-            argo.Parameter(name=sanitize_name(key), value=value)
+            argo.Parameter(name=sanitize_name(key, snake_case=True), value=value)
             for key, value in args.items()
         ]
         artifacts = []
@@ -46,30 +47,42 @@ def _convert_params(
 
 
 def get_arguments(
-    args: Union[dict[str, str], list[Union[argo.Arguments, argo.Parameter]]]
+    args: Union[Dict[str, str], List[Union[argo.Arguments, argo.Parameter]]]
 ) -> argo.Arguments:
     parameters, artifacts = _convert_params(args)
     return argo.Arguments(parameters=parameters, artifacts=artifacts)
 
 
 def get_inputs(
-    args: Union[dict[str, str], list[Union[argo.Arguments, argo.Parameter]]]
+    args: Union[Dict[str, str], List[Union[argo.Arguments, argo.Parameter]]]
 ) -> argo.Inputs:
     parameters, artifacts = _convert_params(args)
     return argo.Inputs(parameters=parameters, artifacts=artifacts)
 
 
 def get_outputs(
-    args: Union[dict[str, str], list[Union[argo.Arguments, argo.Parameter]]]
+    args: Union[Dict[str, str], List[Union[argo.Arguments, argo.Parameter]]]
 ) -> argo.Outputs:
     parameters, artifacts = _convert_params(args)
     return argo.Outputs(parameters=parameters, artifacts=artifacts)
 
 
-def sanitize_name(name: str) -> str:
+def sanitize_name(name: str, snake_case=False) -> str:
     if name is None:
         return None
+    if snake_case:
+        return name
     return name.replace("_", "-")
+
+
+def convert_str(value: any) -> str:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return str(value).lower()
+    if isinstance(value, str):
+        return value
+    return json.dumps(value)
 
 
 def uuid_short():

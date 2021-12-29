@@ -1,3 +1,5 @@
+from typing import List
+
 import pytest
 import yaml
 
@@ -5,20 +7,33 @@ from argo_workflow_tools import dsl, Workflow
 
 
 @dsl.Task(image="python:3.10")
-def say_hello(name: str):
+def say_hello(name: list):
     message = f"hello {name}"
     return message
 
 
 @dsl.DAG()
-def command_hello(name: str):
+def command_hello(name):
     message = say_hello(name)
     return message
 
 
-def test_diamond_params_run_independently():
-    result = say_hello("Brian")
-    assert result == "hello Brian"
+@dsl.Task(image="python:3.9")
+def create_data(name: List[str]):
+    message = f"hello {name}"
+    return message
+
+
+@dsl.Task(image="python:3.9")
+def print_data(message: str):
+    print(message)
+
+
+@dsl.DAG()
+def simple_workflow(name):
+    message = create_data(name)
+    print_data(message)
+    return message
 
 
 def test_diamond_params_dag():

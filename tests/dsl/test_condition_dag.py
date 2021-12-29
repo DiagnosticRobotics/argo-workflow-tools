@@ -1,20 +1,20 @@
-from argo_workflow_tools import DAG, Task, Workflow, Condition
+from argo_workflow_tools import dsl, Workflow, Condition
 
 
 def test_conditional_tasks_dag():
-    @Task(image="python:3.10")
+    @dsl.Task(image="python:3.10")
     def say_hello(name: str):
         message = f"hello {name}"
         print(message)
         return message
 
-    @Task(image="python:3.10")
+    @dsl.Task(image="python:3.10")
     def say_goodbye(name: str):
         message = f"goodbye {name}"
         print(message)
         return message
 
-    @DAG()
+    @dsl.DAG()
     def command_hello(name, command):
         with Condition().equals(command, "hello"):
             say_hello(name)

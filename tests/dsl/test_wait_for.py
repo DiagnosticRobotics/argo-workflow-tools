@@ -1,17 +1,17 @@
-from argo_workflow_tools import DAG, Task, Workflow
+from argo_workflow_tools import dsl, Workflow
 
 
-@Task(image="python:3.10")
+@dsl.Task(image="python:3.10")
 def task1():
     pass
 
 
-@Task(image="python:3.10")
+@dsl.Task(image="python:3.10")
 def task2():
     pass
 
 
-@DAG()
+@dsl.DAG()
 def dag():
     r = task1()
     task2(wait_for=r)

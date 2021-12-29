@@ -1,5 +1,5 @@
 from typing import Callable
-
+from typing import Dict
 import yaml
 
 from argo_workflow_tools.dsl.dag_compiler import compile_dag
@@ -17,7 +17,7 @@ class WorkflowTemplate:
         self,
         name: str,
         entrypoint: Callable,
-        arguments: dict[str, str] = None,
+        arguments: Dict[str, str] = None,
         namespace: str = None,
         labels=None,
         annotations=None,
@@ -37,10 +37,10 @@ class WorkflowTemplate:
         self.name: str = name
         self.entrypoint: Callable = entrypoint
         self.on_exit: Callable = on_exit
-        self.arguments: dict[str, str] = arguments
+        self.arguments: Dict[str, str] = arguments
         self.namespace: str = namespace
-        self.labels: dict[str, str] = labels
-        self.annotations: dict[str, str] = annotations
+        self.labels: Dict[str, str] = labels
+        self.annotations: Dict[str, str] = annotations
 
     def to_model(self) -> argo.WorkflowTemplate:
         """
@@ -49,6 +49,7 @@ class WorkflowTemplate:
         spec = compile_dag(self.entrypoint, self.on_exit)
         spec.arguments = get_arguments(self.arguments)
         return argo.WorkflowTemplate(
+            apiVersion="argoproj.io/v1alpha1",
             kind="WorkflowTemplate",
             metadata=k8s_v1.ObjectMeta(
                 name=self.name,
@@ -79,7 +80,7 @@ class CronWorkflow:
         entrypoint: Callable,
         schedule: str,
         concurrency_policy: str = "Replace",
-        arguments: dict[str, str] = None,
+        arguments: Dict[str, str] = None,
         namespace: str = None,
         labels=None,
         annotations=None,
@@ -100,10 +101,10 @@ class CronWorkflow:
         """
         self.name: str = name
         self.entrypoint: Callable = entrypoint
-        self.arguments: dict[str, str] = arguments
+        self.arguments: Dict[str, str] = arguments
         self.namespace: str = namespace
-        self.labels: dict[str, str] = labels
-        self.annotations: dict[str, str] = annotations
+        self.labels: Dict[str, str] = labels
+        self.annotations: Dict[str, str] = annotations
         self.schedule = schedule
         self.concurrency_policy = concurrency_policy
         self.on_exit: Callable = on_exit
@@ -120,6 +121,7 @@ class CronWorkflow:
             concurrencyPolicy=self.concurrency_policy,
         )
         return argo.CronWorkflow(
+            apiVersion="argoproj.io/v1alpha1",
             kind="CronWorkflow",
             metadata=k8s_v1.ObjectMeta(
                 name=self.name,
@@ -149,7 +151,7 @@ class Workflow:
         entrypoint: Callable,
         name: str = None,
         generated_name: str = None,
-        arguments: dict[str, str] = None,
+        arguments: Dict[str, str] = None,
         namespace: str = None,
         labels=None,
         annotations=None,
@@ -157,10 +159,10 @@ class Workflow:
     ):
         self.name: str = sanitize_name(name)
         self.entrypoint: Callable = entrypoint
-        self.arguments: dict[str, str] = arguments
+        self.arguments: Dict[str, str] = arguments
         self.namespace: str = namespace
-        self.labels: dict[str, str] = labels
-        self.annotations: dict[str, str] = annotations
+        self.labels: Dict[str, str] = labels
+        self.annotations: Dict[str, str] = annotations
         self.generated_name = generated_name
         self.on_exit: Callable = on_exit
 
@@ -175,6 +177,7 @@ class Workflow:
         spec = compile_dag(self.entrypoint, self.on_exit)
         spec.arguments = get_arguments(self.arguments)
         workflow = argo.Workflow(
+            apiVersion="argoproj.io/v1alpha1",
             kind="Workflow",
             metadata=k8s_v1.ObjectMeta(
                 name=self.name,

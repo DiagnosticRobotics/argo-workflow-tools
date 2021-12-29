@@ -1,23 +1,23 @@
-from argo_workflow_tools import DAG, Task, Workflow
+from argo_workflow_tools import dsl, Workflow
 
 
 def test_on_exit_dag():
-    @Task(image="python:3.10")
+    @dsl.Task(image="python:3.10")
     def say_hello(name: str):
         message = f"hello {name}"
         return message
 
-    @Task(image="python:3.10")
+    @dsl.Task(image="python:3.10")
     def say_goodbye():
         message = "goodbye"
         print(message)
         return message
 
-    @DAG()
+    @dsl.DAG()
     def hello_dag(name):
         say_hello(name)
 
-    @DAG()
+    @dsl.DAG()
     def on_exit():
         say_goodbye()
 

@@ -1,22 +1,19 @@
-import pytest
-import yaml
-
-from argo_workflow_tools import DAG, Task, Workflow
+from argo_workflow_tools import dsl, Workflow
 
 
-@Task(image="python:3.10")
+@dsl.Task(image="python:3.10")
 def say_hello(name: str):
     message = f"hello {name}"
     return message
 
 
-@DAG()
+@dsl.DAG()
 def command_hello2(name):
     message = say_hello(name)
     return message
 
 
-@DAG()
+@dsl.DAG()
 def command_hello(name):
     message = command_hello2(name)
     return message
