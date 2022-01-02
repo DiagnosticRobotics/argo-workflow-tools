@@ -2,6 +2,8 @@ from typing import Union, List, Dict, Tuple
 import json
 
 import shortuuid
+from pydantic import BaseModel
+
 from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
 
 shortuuid = shortuuid.ShortUUID(alphabet="abcdefghijklmnopqrstuvwxyz1234567890")
@@ -82,6 +84,8 @@ def convert_str(value: any) -> str:
         return str(value).lower()
     if isinstance(value, str):
         return value
+    if isinstance(value,BaseModel):
+        return value.json()
     return json.dumps(value)
 
 

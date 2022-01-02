@@ -294,6 +294,7 @@ class TaskNode(Node):
         guid = sanitize_name(self._func.__name__) + "-" + uuid_short()
         conditions = collect_conditions()
         if len(self.properties.outputs.items()) == 0:
+
             outputs = {
                 "result": InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
@@ -301,7 +302,7 @@ class TaskNode(Node):
                     name=sanitize_name("result", snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=self.properties.outputs.get(
-                        "result", DefaultParameterBuilder(None)
+                        "result", DefaultParameterBuilder(inspect.signature(self._func).return_annotation)
                     ),
                 )
             }
