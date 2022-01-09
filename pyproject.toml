@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "argo-workflow-tools"
-version = "0.9.26"
+version = "0.9.30"
 description = "A suite of tools to ease ML pipeline development with Argo Workflows"
 authors = ["Diagnostic Robotics"]
 license = "Apache 2.0"
@@ -10,11 +10,11 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = ">=3.7,<4.0"
-PyYAML = ">=5.0"
+PyYAML = ">=5.4"
 pydantic = "^1.7.4"
 contextvars = "^2.4"
 shortuuid = "^1.0.8"
-urllib3 = "<2.0.0"
+urllib3 = "<2.0.0,=>1.26.5"
 certifi = "<=2021.10.8"
 requests = "^2.26.0"
 

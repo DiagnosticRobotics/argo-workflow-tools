@@ -42,6 +42,12 @@ class DefaultParameterBuilder(ParameterBuilder):
                    f"    {variable_name} = json.loads({variable_name}_raw)\n" + \
                    "except:\n" + \
                    f'    {variable_name} = {variable_name}_raw\n'
+        if self.type_annotation == list:
+            return f"{variable_name}_raw = '{{{{inputs.parameters.{parameter_name}}}}}'\n" + \
+                   f"try:\n" + \
+                   f"    {variable_name} = json.loads({variable_name}_raw)\n" + \
+                   "except:\n" + \
+                   f'    {variable_name} = {{{{inputs.parameters.{parameter_name}}}}}\n'
         if issubclass(self.type_annotation, BaseModel):
             return f"{self.type_annotation.__name__}.parse_raw('{{{{inputs.parameters.{parameter_name}}}}}')"
         else:

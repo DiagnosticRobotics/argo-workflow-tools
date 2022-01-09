@@ -57,7 +57,12 @@ class WorkflowTemplate:
                 labels=self.labels,
                 annotations=self.annotations,
             ),
-            spec=spec,
+            spec=argo.WorkflowTemplateSpec(
+                templates=spec.templates,
+                entrypoint=spec.entrypoint,
+                onExit=spec.on_exit,
+                arguments=spec.arguments
+            ),
         )
 
     def to_dict(self) -> dict:
