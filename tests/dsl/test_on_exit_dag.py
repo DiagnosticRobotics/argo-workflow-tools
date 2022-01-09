@@ -1,4 +1,4 @@
-from argo_workflow_tools import dsl, Workflow
+from argo_workflow_tools import dsl, Workflow, WorkflowTemplate
 
 
 def test_on_exit_dag():
@@ -21,8 +21,8 @@ def test_on_exit_dag():
     def on_exit():
         say_goodbye()
 
-    workflow = Workflow(
-        generated_name="hello-world",
+    workflow = WorkflowTemplate(
+        name="hello-world",
         entrypoint=hello_dag,
         on_exit=on_exit,
         arguments={"name": "james"},
