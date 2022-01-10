@@ -178,6 +178,13 @@ def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
     return "&&".join(condition_expr)
 
 
+def _build_exit_hook(exit_hook:any):
+    if exit_hook:
+        exit_hook_template = _build_task_template(exit_hook)
+        return {"exit": argo.LifecycleHook(template=exit_hook_template.name)}
+    return None
+
+
 def _build_dag_task(
     dag_task: NodeReference, unique_node_names_map: Dict[str, str]
 ) -> argo.DagTask:
@@ -199,17 +206,20 @@ def _build_dag_task(
         for input_name, input_type in dag_task.arguments.items()
     ]
 
+    hook = _build_exit_hook(dag_task.exit)
+
     if isinstance(dag_task, DAGReference):
         dag = _build_dag_template(dag_task.node)
-
-        return argo.DagTask(
+        task = argo.DagTask(
             name=dag_task.id,
             template=dag.name,
             arguments=get_arguments(list(arguments)),
             dependencies=list(dependencies),
+            hooks=hook,
             withParam=with_param,
             when=build_condition(dag_task.conditions),
         )
+        return task
     elif isinstance(dag_task, TaskReference):
         task_template = _build_task_template(dag_task)
 
@@ -218,6 +228,7 @@ def _build_dag_task(
             template=task_template.name,
             dependencies=list(dependencies),
             arguments=get_arguments(arguments),
+            hooks=hook,
             withParam=with_param,
             when=build_condition(dag_task.conditions),
         )
@@ -229,6 +240,7 @@ def _build_dag_task(
                 name=dag_task.workflow_template_name, template=dag_task.name
             ),
             dependencies=list(dependencies),
+            hooks=hook,
             arguments=get_arguments(arguments),
             withParam=with_param,
             when=build_condition(dag_task.conditions),
