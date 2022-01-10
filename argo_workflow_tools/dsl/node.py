@@ -236,12 +236,13 @@ class DAGNode(Node):
             raise ValueError(
                 "Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead"
             )
-
+        template_name = sanitize_name(self._func.__name__)
         if len(self.properties.outputs.items()) == 0:
             outputs = {
                 "result": InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
+                    source_template=template_name,
                     name=sanitize_name("result", snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=self.properties.outputs.get(
@@ -254,6 +255,7 @@ class DAGNode(Node):
                 name: InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
+                    source_template=template_name,
                     name=sanitize_name(name, snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=parameter_builder,
@@ -313,10 +315,6 @@ class TaskNode(Node):
             else:
                 return None
 
-        exit_result = None
-        if exit_handler:
-            exit_result = exit_handler()
-
         arguments = self._bind_arguments(*args, **kwargs)
         partitioned_arguments = list(
             filter(
@@ -331,12 +329,14 @@ class TaskNode(Node):
             )
         guid = sanitize_name(self._func.__name__) + "-" + uuid_short()
         conditions = collect_conditions()
+        template_name = sanitize_name(self._func.__name__)
         if len(self.properties.outputs.items()) == 0:
 
             outputs = {
                 "result": InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
+                    source_template=template_name,
                     name=sanitize_name("result", snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=self.properties.outputs.get(
@@ -349,6 +349,7 @@ class TaskNode(Node):
                 name: InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
+                    source_template=template_name,
                     name=sanitize_name(name, snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=parameter_builder,
@@ -362,7 +363,7 @@ class TaskNode(Node):
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
-                exit=exit_result,
+                exit=exit_handler,
                 arguments=self._arguments(arguments),
                 outputs=outputs,
                 properties=self.properties,

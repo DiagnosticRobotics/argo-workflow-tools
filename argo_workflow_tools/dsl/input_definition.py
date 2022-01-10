@@ -28,15 +28,17 @@ class InputDefinition:
         source_type: SourceType,
         name: str,
         source_node_id: str = None,
+        source_template: str = None,
         references: Optional["InputDefinition"] = None,
         parameter_builder: ParameterBuilder = None,
         key_name: str = None,
         value: str = None,
-        default: any = None,
+        default: any = None
     ):
         self.source_type = source_type
         self.name = name
         self.source_node_id = source_node_id
+        self.source_template = source_template
         self.reference = references
         self.parameter_builder = parameter_builder
         self.key_name = key_name

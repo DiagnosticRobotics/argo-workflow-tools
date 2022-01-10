@@ -5,21 +5,21 @@ def test_on_exit_dag():
     @dsl.Task(image="python:3.10")
     def say_hello(name: str):
         message = f"hello {name}"
-        #raise "balalalal"
+        raise Exception("balalalal")
+
+
+    @dsl.Task(image="python:3.10")
+    def say_goodbye(name:str):
+        message = f"goodbye {name}"
         print(message)
         return message
 
-    @dsl.Task(image="python:3.10")
-    def say_goodbye():
-        message = "goodbye "
-        print(message)
-        return message
 
     @dsl.DAG()
     def hello_dag(name):
-        say_hello(name, exit=say_goodbye)
+        say_hello(name, exit=lambda: say_goodbye(name))
 
-    #hello_dag("omri")
+    # hello_dag("omri")
 
     workflow = WorkflowTemplate(
         name="hello-world",
