@@ -2,7 +2,7 @@ import inspect
 import os
 from contextvars import copy_context
 from itertools import groupby
-from typing import Mapping, Optional, Union, Dict, List
+from typing import Mapping, Optional, Union, Dict, List, Callable
 
 from argo_workflow_tools.dsl import building_mode_context, workflow_template_collector
 from argo_workflow_tools.dsl.condition import BinaryOp, UnaryOp
@@ -178,7 +178,7 @@ def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
     return "&&".join(condition_expr)
 
 
-def _build_exit_hook(exit_hook):
+def _build_exit_hook(exit_hook: Callable) -> Dict[str, argo.LifecycleHook]:
     if exit_hook:
         ctx = copy_context()
         dag_output = ctx.run(exit_hook)
