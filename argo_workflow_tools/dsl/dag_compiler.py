@@ -180,8 +180,8 @@ def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
 
 def _build_exit_hook(exit_hook:any):
     if exit_hook:
-        exit_hook_template = _build_task_template(exit_hook)
-        return {"exit": argo.LifecycleHook(template=exit_hook_template.name)}
+        # exit_hook_template = _build_task_template(exit_hook)
+        return {"exit": argo.LifecycleHook(template=exit_hook.source_node_id)}
     return None
 
 

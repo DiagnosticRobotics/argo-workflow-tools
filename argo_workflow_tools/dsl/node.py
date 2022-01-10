@@ -300,8 +300,8 @@ class TaskNode(Node):
         call the DAG function, in case we are not in DSL compilation mode, the function will call the function.
         else the fucntion will return a reference response representing the node response
         """
+        exit_handler = kwargs.get("exit")
         if not context.dag_building_mode.get():
-            exit_handler = kwargs.get("exit")
             cleaned_kwargs = self._filter_dag_args(kwargs)
             conditions = collect_conditions()
             if all([condition.value for condition in conditions]):
@@ -312,6 +312,10 @@ class TaskNode(Node):
                         exit_handler()
             else:
                 return None
+
+        exit_result = None
+        if exit_handler:
+            exit_result = exit_handler()
 
         arguments = self._bind_arguments(*args, **kwargs)
         partitioned_arguments = list(
@@ -358,7 +362,7 @@ class TaskNode(Node):
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
-                exit=self._get_exit(kwargs),
+                exit=exit_result,
                 arguments=self._arguments(arguments),
                 outputs=outputs,
                 properties=self.properties,
