@@ -1,5 +1,5 @@
-from typing import Callable
-from typing import Dict
+from typing import Callable, Any
+from typing import Dict, List, Union
 import yaml
 
 from argo_workflow_tools.dsl.dag_compiler import compile_dag
@@ -17,7 +17,7 @@ class WorkflowTemplate:
         self,
         name: str,
         entrypoint: Callable,
-        arguments: Dict[str, str] = None,
+        arguments: Union[Dict[str, Any], List[Union[argo.Artifact, argo.Parameter]]] = None,
         namespace: str = None,
         labels=None,
         annotations=None,
@@ -37,7 +37,7 @@ class WorkflowTemplate:
         self.name: str = name
         self.entrypoint: Callable = entrypoint
         self.on_exit: Callable = on_exit
-        self.arguments: Dict[str, str] = arguments
+        self.arguments: Union[Dict[str, Any], List[Union[argo.Artifact, argo.Parameter]]] = arguments
         self.namespace: str = namespace
         self.labels: Dict[str, str] = labels
         self.annotations: Dict[str, str] = annotations
