@@ -104,37 +104,6 @@ class Node(object):
             )
 
     @staticmethod
-    def _get_exit(kwargs) -> List["str"]:
-        """
-        Generaete exit hook out of exit parameter
-        Parameters
-        ----------
-        kwargs :
-            fucntion argumetns
-        Returns
-        -------
-            exit hook
-
-        """
-        if not kwargs.get("exit"):
-            return None
-        if not isinstance(kwargs.get("exit"), Callable):
-            raise "Expected exit sepcial parameter to be a callable lambda, example: exit=lambda: exit_func(parameter) ."
-        exit_hook = kwargs.get("exit")
-        return TaskReference(
-            func=exit_hook.func,
-            id="dddd",
-            name="dd",
-            arguments={},
-            conditions=None,
-            properties=exit_hook.properties,
-            exit=None,
-            node="node",
-            wait_for=None,
-            outputs={},
-        )
-
-    @staticmethod
     def _reduce_fan_in_arguments(name: str, arg: Any) -> Any:
         if (
             isinstance(arg, Sequence)
@@ -218,8 +187,8 @@ class DAGNode(Node):
         call the DAG function, in case we are not in DSL compilation mode, the function will call the function.
         else the fucntion will return a reference response representing the node response
         """
+        exit_handler = kwargs.get("exit")
         if not context.dag_building_mode.get():
-            exit_handler = kwargs.get("exit")
             cleaned_kwargs = self._filter_dag_args(kwargs)
             conditions = collect_conditions()
             if all([condition.value for condition in conditions]):
@@ -280,7 +249,7 @@ class DAGNode(Node):
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
-                exit=self._get_exit(kwargs),
+                exit=exit_handler,
                 arguments=self._arguments(arguments),
                 outputs=outputs,
                 node=self,
