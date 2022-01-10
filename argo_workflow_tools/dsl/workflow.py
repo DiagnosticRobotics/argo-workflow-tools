@@ -61,7 +61,7 @@ class WorkflowTemplate:
                 templates=spec.templates,
                 entrypoint=spec.entrypoint,
                 onExit=spec.on_exit,
-                arguments=spec.arguments
+                arguments=spec.arguments,
             ),
         )
 

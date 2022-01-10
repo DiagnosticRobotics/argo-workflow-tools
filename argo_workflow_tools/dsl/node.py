@@ -92,7 +92,7 @@ class Node(object):
             return []
         dependencies = cast(InputDefinition, kwargs.get("wait_for"))
         if (
-                isinstance(dependencies, InputDefinition) and dependencies.is_node_output
+            isinstance(dependencies, InputDefinition) and dependencies.is_node_output
         ):  # TODO or it's variants NODE_OUTPUT
             return [dependencies]
         if isinstance(dependencies, Iterable):
@@ -121,18 +121,27 @@ class Node(object):
         if not isinstance(kwargs.get("exit"), Callable):
             raise "Expected exit sepcial parameter to be a callable lambda, example: exit=lambda: exit_func(parameter) ."
         exit_hook = kwargs.get("exit")
-        return TaskReference(func=exit_hook.func, id="dddd", name="dd", arguments={}, conditions=None, properties=exit_hook.properties,
-                             exit=None,
-                             node="node", wait_for=None, outputs={})
+        return TaskReference(
+            func=exit_hook.func,
+            id="dddd",
+            name="dd",
+            arguments={},
+            conditions=None,
+            properties=exit_hook.properties,
+            exit=None,
+            node="node",
+            wait_for=None,
+            outputs={},
+        )
 
     @staticmethod
     def _reduce_fan_in_arguments(name: str, arg: Any) -> Any:
         if (
-                isinstance(arg, Sequence)
-                and len(arg) == 1
-                and isinstance(arg[0], InputDefinition)
-                and arg[0].is_node_output
-                and arg[0].reference
+            isinstance(arg, Sequence)
+            and len(arg) == 1
+            and isinstance(arg[0], InputDefinition)
+            and arg[0].is_node_output
+            and arg[0].reference
         ):
             return InputDefinition(
                 SourceType.REDUCE,
@@ -142,9 +151,9 @@ class Node(object):
             )
 
         if (
-                not isinstance(arg, str)
-                and isinstance(arg, Sequence)
-                and any([item.is_node_output for item in arg])
+            not isinstance(arg, str)
+            and isinstance(arg, Sequence)
+            and any([item.is_node_output for item in arg])
         ):
             raise ValueError(
                 f"Argument '{name}' of type '{type(arg).__name__}' is invalid. it mixes both parameters and node outputs"
@@ -228,7 +237,7 @@ class DAGNode(Node):
         partitioned_arguments = list(
             filter(
                 lambda argument: isinstance(argument, InputDefinition)
-                                 and argument.is_partition,
+                and argument.is_partition,
                 arguments.values(),
             )
         )
@@ -319,7 +328,7 @@ class TaskNode(Node):
         partitioned_arguments = list(
             filter(
                 lambda argument: isinstance(argument, InputDefinition)
-                                 and argument.is_partition,
+                and argument.is_partition,
                 arguments.values(),
             )
         )
@@ -340,7 +349,10 @@ class TaskNode(Node):
                     name=sanitize_name("result", snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=self.properties.outputs.get(
-                        "result", DefaultParameterBuilder(inspect.signature(self._func).return_annotation)
+                        "result",
+                        DefaultParameterBuilder(
+                            inspect.signature(self._func).return_annotation
+                        ),
                     ),
                 )
             }
@@ -379,13 +391,13 @@ class TaskNode(Node):
 
 class WorkflowTemplateNode(DAGNode):
     def __init__(
-            self,
-            func: Callable,
-            name: str,
-            properties: DAGNodeProperties,
-            namespace: str = None,
-            on_exit: Callable = None,
-            arguments: dict = None,
+        self,
+        func: Callable,
+        name: str,
+        properties: DAGNodeProperties,
+        namespace: str = None,
+        on_exit: Callable = None,
+        arguments: dict = None,
     ):
 
         """
@@ -420,7 +432,7 @@ class WorkflowTemplateNode(DAGNode):
         partitioned_arguments = list(
             filter(
                 lambda argument: isinstance(argument, InputDefinition)
-                                 and argument.is_partition,
+                and argument.is_partition,
                 arguments.values(),
             )
         )

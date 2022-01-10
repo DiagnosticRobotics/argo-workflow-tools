@@ -33,7 +33,7 @@ class InputDefinition:
         parameter_builder: ParameterBuilder = None,
         key_name: str = None,
         value: str = None,
-        default: any = None
+        default: any = None,
     ):
         self.source_type = source_type
         self.name = name

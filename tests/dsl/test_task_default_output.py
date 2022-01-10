@@ -17,7 +17,9 @@ def command_hello(name):
 
 
 def test_diamond_params_run_independently():
-    workflow = Workflow(entrypoint=command_hello,name="command-hello",arguments={"name":"test"})
+    workflow = Workflow(
+        entrypoint=command_hello, name="command-hello", arguments={"name": "test"}
+    )
     model = workflow.to_model()
 
     assert model.spec.templates[0].outputs.parameters[0].value_from.default == ""
