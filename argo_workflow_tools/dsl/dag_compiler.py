@@ -356,8 +356,9 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
             valueFrom=argo.ValueFrom(
                 path=output_definition.parameter_builder.artifact_path(
                     output_definition.name
-                )
-            ),
+                ),
+                default=""
+            )
         )
         for output_name, output_definition in task_node.outputs.items()
     ]
