@@ -17,7 +17,7 @@ jobs:
         python-version: '3.x'
     - name: Install dependencies
       run: |
-        python -m poetry install --upgrade poetry
+        python -m pip install --upgrade poetry
         poetry install
     - name: Build package
       run: poetry build -f wheel
