@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
-from collections import Callable
-from typing import Set
+from typing import Set, Callable
 
 
 class ParameterBuilder(ABC):
