@@ -90,6 +90,7 @@ class CronWorkflow:
         labels=None,
         annotations=None,
         on_exit: Callable = None,
+        suspend: bool = False
     ):
         """
         Cron Workflow
@@ -113,6 +114,7 @@ class CronWorkflow:
         self.schedule = schedule
         self.concurrency_policy = concurrency_policy
         self.on_exit: Callable = on_exit
+        self.suspend: bool = suspend
 
     def to_model(self) -> argo.CronWorkflow:
         """
@@ -124,6 +126,7 @@ class CronWorkflow:
             workflowSpec=wf_spec,
             schedule=self.schedule,
             concurrencyPolicy=self.concurrency_policy,
+            suspend=self.suspend
         )
         return argo.CronWorkflow(
             apiVersion="argoproj.io/v1alpha1",
