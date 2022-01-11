@@ -64,6 +64,7 @@ def WorkflowTemplate(
         outputs = {}
     if arguments is None:
         arguments = {}
+
     def decorator(func: Callable) -> DAGNode:
         return WorkflowTemplateNode(
             func,

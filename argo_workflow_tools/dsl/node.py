@@ -72,6 +72,7 @@ class Node(object):
         filtered_kwargs = kwargs.copy()
         filtered_kwargs.pop("wait_for", None)
         filtered_kwargs.pop("when", None)
+        filtered_kwargs.pop("exit", None)
         return filtered_kwargs
 
     @staticmethod
@@ -186,11 +187,16 @@ class DAGNode(Node):
         call the DAG function, in case we are not in DSL compilation mode, the function will call the function.
         else the fucntion will return a reference response representing the node response
         """
+        exit_handler = kwargs.get("exit")
         if not context.dag_building_mode.get():
             cleaned_kwargs = self._filter_dag_args(kwargs)
             conditions = collect_conditions()
             if all([condition.value for condition in conditions]):
-                return self._func(*args, **cleaned_kwargs)
+                try:
+                    return self._func(*args, **cleaned_kwargs)
+                finally:
+                    if exit_handler:
+                        exit_handler()
             else:
                 return None
 
@@ -208,12 +214,13 @@ class DAGNode(Node):
             raise ValueError(
                 "Nested loops are not allowed in the same DAG, split your loops into nested DAG's instead"
             )
-
+        template_name = sanitize_name(self._func.__name__)
         if len(self.properties.outputs.items()) == 0:
             outputs = {
                 "result": InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
+                    source_template=template_name,
                     name=sanitize_name("result", snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=self.properties.outputs.get(
@@ -226,6 +233,7 @@ class DAGNode(Node):
                 name: InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
+                    source_template=template_name,
                     name=sanitize_name(name, snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=parameter_builder,
@@ -241,6 +249,7 @@ class DAGNode(Node):
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
+                exit=exit_handler,
                 arguments=self._arguments(arguments),
                 outputs=outputs,
                 node=self,
@@ -271,11 +280,16 @@ class TaskNode(Node):
         call the DAG function, in case we are not in DSL compilation mode, the function will call the function.
         else the fucntion will return a reference response representing the node response
         """
+        exit_handler = kwargs.get("exit")
         if not context.dag_building_mode.get():
             cleaned_kwargs = self._filter_dag_args(kwargs)
             conditions = collect_conditions()
             if all([condition.value for condition in conditions]):
-                return self._func(*args, **cleaned_kwargs)
+                try:
+                    return self._func(*args, **cleaned_kwargs)
+                finally:
+                    if exit_handler:
+                        exit_handler()
             else:
                 return None
 
@@ -293,16 +307,21 @@ class TaskNode(Node):
             )
         guid = sanitize_name(self._func.__name__) + "-" + uuid_short()
         conditions = collect_conditions()
+        template_name = sanitize_name(self._func.__name__)
         if len(self.properties.outputs.items()) == 0:
 
             outputs = {
                 "result": InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
+                    source_template=template_name,
                     name=sanitize_name("result", snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=self.properties.outputs.get(
-                        "result", DefaultParameterBuilder(inspect.signature(self._func).return_annotation)
+                        "result",
+                        DefaultParameterBuilder(
+                            inspect.signature(self._func).return_annotation
+                        ),
                     ),
                 )
             }
@@ -311,6 +330,7 @@ class TaskNode(Node):
                 name: InputDefinition(
                     source_type=SourceType.NODE_OUTPUT,
                     source_node_id=guid,
+                    source_template=template_name,
                     name=sanitize_name(name, snake_case=True),
                     references=partitioned_arguments,
                     parameter_builder=parameter_builder,
@@ -324,6 +344,7 @@ class TaskNode(Node):
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
+                exit=exit_handler,
                 arguments=self._arguments(arguments),
                 outputs=outputs,
                 properties=self.properties,

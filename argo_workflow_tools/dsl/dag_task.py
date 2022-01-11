@@ -21,6 +21,7 @@ class NodeReference(object):
     node: str
     arguments: Mapping[str, Union[InputDefinition]]
     wait_for: List[InputDefinition]
+    exit: Callable
     conditions: List[any]
 
 

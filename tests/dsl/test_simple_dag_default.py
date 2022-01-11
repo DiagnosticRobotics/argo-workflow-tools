@@ -12,18 +12,13 @@ def say_hello(name: list):
     return message
 
 
-
-
-
-@dsl.WorkflowTemplate(name="hello-wrld",arguments={"name":"[\"hi\",\"bye\"]"})
-def simple_workflow(name:list):
+@dsl.WorkflowTemplate(name="hello-wrld", arguments={"name": '["hi","bye"]'})
+def simple_workflow(name: list):
     say_hello(name=name)
 
 
-
-
 def test_diammond_params_dag():
-    from  argo_workflow_tools.dsl.workflow_compiler import compile_workflow
+    from argo_workflow_tools.dsl.workflow_compiler import compile_workflow
+
     workflow = compile_workflow(simple_workflow)
     print(workflow.to_yaml())
-
