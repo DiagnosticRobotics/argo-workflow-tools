@@ -8,7 +8,10 @@ isort:
 	isort argo_workflow_tools tests examples
 
 test:
-	pytest --durations=5 tests
+	poetry run pytest --durations=5 tests/dsl
 
 build:
 	poetry build --format wheel
+
+install:
+	poetry install

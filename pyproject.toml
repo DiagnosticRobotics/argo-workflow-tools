@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "argo-workflow-tools"
-version = "0.9.32"
+version = "0.9.33"
 description = "A suite of tools to ease ML pipeline development with Argo Workflows"
 authors = ["Diagnostic Robotics"]
 license = "Apache 2.0"

@@ -387,11 +387,16 @@ class WorkflowTemplateNode(DAGNode):
         call the DAG function, in case we are not in DSL compilation mode, the function will call the function.
         else the fucntion will return a reference response representing the node response
         """
+        exit_handler = kwargs.get("exit")
         if not context.dag_building_mode.get():
             cleaned_kwargs = self._filter_dag_args(kwargs)
             conditions = collect_conditions()
             if all([condition.value for condition in conditions]):
-                return self._func(*args, **cleaned_kwargs)
+                try:
+                    return self._func(*args, **cleaned_kwargs)
+                finally:
+                    if exit_handler:
+                        exit_handler()
             else:
                 return None
 
@@ -445,6 +450,7 @@ class WorkflowTemplateNode(DAGNode):
                 wait_for=self._get_wait(kwargs),
                 arguments=self._arguments(arguments),
                 outputs=outputs,
+                exit=exit_handler,
                 node=self,
                 properties=self.properties,
                 conditions=conditions,

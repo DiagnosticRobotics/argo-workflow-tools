@@ -1,3 +1,5 @@
+from typing import List
+
 from argo_workflow_tools.dsl import dsl_decorators
 from argo_workflow_tools.dsl.workflow import Workflow
 
@@ -12,7 +14,7 @@ def generate_list(partitions: int, partition_size: int):
 
 
 @dsl_decorators.Task(image="python:3.10")
-def sum_task(items: list[int]):
+def sum_task(items: list):
     return sum(items)
 
 
