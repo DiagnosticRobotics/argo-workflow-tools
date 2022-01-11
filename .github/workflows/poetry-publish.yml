@@ -27,4 +27,4 @@ jobs:
         PYPI_USER: ${{ secrets.PYPI_USER }}
         PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
 
-      run: poetry publish -u $PYPI_USER -p $PYPI_TOKEN
+      run: poetry publish -u "$PYPI_USER" -p "$PYPI_TOKEN"
