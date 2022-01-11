@@ -84,7 +84,7 @@ def convert_str(value: any) -> str:
         return str(value).lower()
     if isinstance(value, str):
         return value
-    if isinstance(value,BaseModel):
+    if isinstance(value, BaseModel):
         return value.json()
     return json.dumps(value)
 

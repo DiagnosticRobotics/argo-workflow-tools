@@ -10,6 +10,6 @@ def compile_workflow(workflowTemplateNode: WorkflowTemplateNode) -> WorkflowTemp
         on_exit=workflowTemplateNode.on_exit,
         arguments=workflowTemplateNode.arguments,
         labels=workflowTemplateNode.properties.labels,
-        annotations=workflowTemplateNode.properties.annotations
+        annotations=workflowTemplateNode.properties.annotations,
     )
     return workflowTemplate
