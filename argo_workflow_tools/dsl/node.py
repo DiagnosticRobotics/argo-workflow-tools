@@ -443,6 +443,7 @@ class WorkflowTemplateNode(DAGNode):
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
+                exit=None,
                 arguments=self._arguments(arguments),
                 outputs=outputs,
                 node=self,
