@@ -275,7 +275,7 @@ class DAGNode(Node):
 
 class TaskNode(Node):
     def __init__(self, func: Callable, properties: TaskNodeProperties,
-                 pre_task_hook: Optional[Callable[[], None]], post_task_hook: Optional[Callable[[], None]]):
+                 pre_hook: Optional[Callable[[], None]], post_hook: Optional[Callable[[], None]]):
         """
         reporesents a task leaf node in the workflow graph
         Parameters
@@ -285,8 +285,8 @@ class TaskNode(Node):
         """
         super().__init__(func)
         self.properties = properties
-        self._pre_task_hook = pre_task_hook
-        self._post_task_hook = post_task_hook
+        self._pre_hook = pre_hook
+        self._post_hook = post_hook
 
     def __call__(self, *args, **kwargs) -> Any:
         """
@@ -362,8 +362,8 @@ class TaskNode(Node):
                 id=guid,
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
-                pre_func_hooks=self._pre_task_hook,
-                post_func_hooks=self._post_task_hook,
+                pre_func_hooks=self._pre_hook,
+                post_func_hooks=self._post_hook,
                 wait_for=self._get_wait(kwargs),
                 continue_on_fail=kwargs.get("continue_on_fail"),
                 exit=exit_handler,
@@ -380,13 +380,13 @@ class TaskNode(Node):
             return outputs
 
     def _call_task_func_with_hooks(self, args, cleaned_kwargs):
-        if self._pre_task_hook is not None:
-            self._pre_task_hook()
+        if self._pre_hook is not None:
+            self._pre_hook()
         try:
             return self._func(*args, **cleaned_kwargs)
         finally:
-            if self._post_task_hook is not None:
-                self._post_task_hook()
+            if self._post_hook is not None:
+                self._post_hook()
 
 
 class WorkflowTemplateNode(DAGNode):

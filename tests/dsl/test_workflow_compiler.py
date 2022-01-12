@@ -22,7 +22,7 @@ def say_hello(name: str):
     return message
 
 
-@dsl.Task(image="python:3.10", pre_task_hook=pre_hook1, post_task_hook=post_hook1)
+@dsl.Task(image="python:3.10", pre_hook=pre_hook1, post_hook=post_hook1)
 def say_hello_with_hooks(name: str):
     message = f"hello {name}"
     return message

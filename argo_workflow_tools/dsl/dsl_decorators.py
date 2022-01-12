@@ -104,8 +104,8 @@ def Task(
     env: List[k8s.EnvVar] = None,
     env_from: List[k8s.EnvFromSource] = None,
     image_pull_policy: str = None,
-    pre_task_hook: Optional[Callable[[], None]] = None,
-    post_task_hook: Optional[Callable[[], None]] = None,
+    pre_hook: Optional[Callable[[], None]] = None,
+    post_hook: Optional[Callable[[], None]] = None,
 ) -> Callable[[Callable], Node]:
     if inputs is None:
         inputs = {}
@@ -134,8 +134,8 @@ def Task(
                 inputs=inputs,
                 outputs=outputs,
             ),
-            pre_task_hook=pre_task_hook,
-            post_task_hook=post_task_hook,
+            pre_hook=pre_hook,
+            post_hook=post_hook,
         )
 
     return decorator
