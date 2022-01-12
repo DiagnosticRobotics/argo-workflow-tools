@@ -46,9 +46,8 @@ def _create_task_script(
     """
     if func_obj.func is None:
         return None
-    code = inspect.getsource(func_obj.func)
+
     function_signature = inspect.signature(func_obj.func)
-    code = code[code.find("def ") :]
     builder_imports = set()
     inputs = ""
     outputs = ""
@@ -76,16 +75,56 @@ def _create_task_script(
             "result", DefaultParameterBuilder(function_signature.return_annotation)
         )
         outputs = output_builder.variable_to_output("result", "result", func_obj)
-    call = f"result={func_obj.func.__name__}({str.join(',', inspect.signature(func_obj.func).parameters.keys())})"
+
+    func_code = _extract_source_without_decorators(func_obj.func)
+
+    pre_func_hook = func_obj.pre_func_hooks or _dummy_pre_func_hook
+    pre_func_hook_code = _extract_source_without_decorators(pre_func_hook)
+
+    post_func_hook = func_obj.post_func_hooks or _dummy_post_func_hook
+    post_func_hook_code = _extract_source_without_decorators(post_func_hook)
+
+    script = _build_full_source_script(func_obj, func_code, builder_imports, inputs, outputs, pre_func_hook,
+                                       pre_func_hook_code,  post_func_hook, post_func_hook_code)
+    return script
+
+
+def _build_full_source_script(func_obj, func_code, builder_imports, inputs, outputs,
+                              pre_func_hook,  pre_func_hook_code,  post_func_hook, post_func_hook_code):
+    indentation = ' ' * 4
+    func_call = f"result={func_obj.func.__name__}({str.join(',', inspect.signature(func_obj.func).parameters.keys())})"
+    func_and_hooks_call = (
+            f"{pre_func_hook.__name__}()\n"
+            + f"try:\n"
+            + f"{indentation}{func_call}\n"
+            + f"finally:\n"
+            + f"{indentation}{post_func_hook.__name__}()"
+    )
     builder_imports = str.join(os.linesep, list(builder_imports))
     script = (
-        f"{builder_imports}\n"
-        + f"{code}\n"
-        + f"{inputs}\n"
-        + f"{call}\n"
-        + f"{outputs}"
+            f"{builder_imports}\n"
+            + f"{pre_func_hook_code}\n"
+            + f"{post_func_hook_code}\n"
+            + f"{func_code}\n"
+            + f"{inputs}\n"
+            + f"{func_and_hooks_call}\n"
+            + f"{outputs}"
     )
     return script
+
+
+def _extract_source_without_decorators(func):
+    code = inspect.getsource(func)
+    code = code[code.find("def "):]
+    return code
+
+
+def _dummy_pre_func_hook():
+    pass
+
+
+def _dummy_post_func_hook():
+    pass
 
 
 def _fill_task_metadata(task_template: argo.Template, properties: TaskNodeProperties):
