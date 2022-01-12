@@ -199,6 +199,8 @@ class DAGNode(Node):
                 except Exception as e:
                     if not continue_on_fail_handler:
                         raise e
+                    else:
+                        return None
                 finally:
                     if exit_handler:
                         exit_handler()
@@ -297,6 +299,8 @@ class TaskNode(Node):
                 except Exception as e:
                     if not continue_on_fail_handler:
                         raise e
+                    else:
+                        return None
                 finally:
                     if exit_handler:
                         exit_handler()
@@ -465,6 +469,7 @@ class WorkflowTemplateNode(DAGNode):
                 node=self,
                 properties=self.properties,
                 conditions=conditions,
+                continue_on_fail=kwargs.get("continue_on_fail")
             ),
         )
         if len(outputs.items()) == 1:
