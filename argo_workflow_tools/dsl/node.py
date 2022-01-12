@@ -71,6 +71,7 @@ class Node(object):
         """
         filtered_kwargs = kwargs.copy()
         filtered_kwargs.pop("wait_for", None)
+        filtered_kwargs.pop("continue_on_fail", None)
         filtered_kwargs.pop("when", None)
         filtered_kwargs.pop("exit", None)
         return filtered_kwargs
@@ -188,12 +189,16 @@ class DAGNode(Node):
         else the fucntion will return a reference response representing the node response
         """
         exit_handler = kwargs.get("exit")
+        continue_on_fail_handler = kwargs.get("continue_on_fail")
         if not context.dag_building_mode.get():
             cleaned_kwargs = self._filter_dag_args(kwargs)
             conditions = collect_conditions()
             if all([condition.value for condition in conditions]):
                 try:
                     return self._func(*args, **cleaned_kwargs)
+                except Exception as e:
+                    if not continue_on_fail_handler:
+                        raise e
                 finally:
                     if exit_handler:
                         exit_handler()
@@ -249,6 +254,7 @@ class DAGNode(Node):
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
+                continue_on_fail=kwargs.get("continue_on_fail"),
                 exit=exit_handler,
                 arguments=self._arguments(arguments),
                 outputs=outputs,
@@ -281,12 +287,16 @@ class TaskNode(Node):
         else the fucntion will return a reference response representing the node response
         """
         exit_handler = kwargs.get("exit")
+        continue_on_fail_handler = kwargs.get("continue_on_fail")
         if not context.dag_building_mode.get():
             cleaned_kwargs = self._filter_dag_args(kwargs)
             conditions = collect_conditions()
             if all([condition.value for condition in conditions]):
                 try:
                     return self._func(*args, **cleaned_kwargs)
+                except Exception as e:
+                    if not continue_on_fail_handler:
+                        raise e
                 finally:
                     if exit_handler:
                         exit_handler()
@@ -344,6 +354,7 @@ class TaskNode(Node):
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
                 wait_for=self._get_wait(kwargs),
+                continue_on_fail=kwargs.get("continue_on_fail"),
                 exit=exit_handler,
                 arguments=self._arguments(arguments),
                 outputs=outputs,

@@ -222,6 +222,7 @@ def _build_dag_task(
     ]
 
     hook = _build_exit_hook(dag_task.exit)
+    continue_on = argo.ContinueOn(failed=dag_task.continue_on_fail) if dag_task.continue_on_fail else None
 
     if isinstance(dag_task, DAGReference):
         dag = _build_dag_template(dag_task.node)
@@ -233,6 +234,7 @@ def _build_dag_task(
             hooks=hook,
             withParam=with_param,
             when=build_condition(dag_task.conditions),
+            continueOn=continue_on
         )
         return task
     elif isinstance(dag_task, TaskReference):
@@ -246,6 +248,7 @@ def _build_dag_task(
             hooks=hook,
             withParam=with_param,
             when=build_condition(dag_task.conditions),
+            continueOn=continue_on
         )
         return task
     elif isinstance(dag_task, WorkflowTemplateReference):
@@ -259,6 +262,7 @@ def _build_dag_task(
             arguments=get_arguments(arguments),
             withParam=with_param,
             when=build_condition(dag_task.conditions),
+            continueOn=continue_on
         )
         return task
     else:
