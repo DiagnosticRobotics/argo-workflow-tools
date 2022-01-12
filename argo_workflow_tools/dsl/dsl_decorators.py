@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
 import argo_workflow_tools.models.io.argoproj.workflow.v1alpha1 as argo
 import argo_workflow_tools.models.io.k8s.api.core.v1 as k8s
@@ -104,6 +104,8 @@ def Task(
     env: List[k8s.EnvVar] = None,
     env_from: List[k8s.EnvFromSource] = None,
     image_pull_policy: str = None,
+    pre_hook: Optional[Callable[[], None]] = None,
+    post_hook: Optional[Callable[[], None]] = None,
 ) -> Callable[[Callable], Node]:
     if inputs is None:
         inputs = {}
@@ -132,6 +134,8 @@ def Task(
                 inputs=inputs,
                 outputs=outputs,
             ),
+            pre_hook=pre_hook,
+            post_hook=post_hook,
         )
 
     return decorator

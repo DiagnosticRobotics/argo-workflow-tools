@@ -1,6 +1,6 @@
 import inspect
 from abc import abstractmethod
-from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, cast, List
+from typing import Any, Callable, Dict, Iterable, Mapping, Sequence, cast, List, Optional
 
 from argo_workflow_tools.dsl import building_mode_context as context
 from argo_workflow_tools.dsl.dag_task import (
@@ -255,6 +255,8 @@ class DAGNode(Node):
                 id=guid,
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
+                pre_func_hooks=None,
+                post_func_hooks=None,
                 wait_for=self._get_wait(kwargs),
                 continue_on_fail=kwargs.get("continue_on_fail"),
                 exit=exit_handler,
@@ -272,7 +274,8 @@ class DAGNode(Node):
 
 
 class TaskNode(Node):
-    def __init__(self, func: Callable, properties: TaskNodeProperties):
+    def __init__(self, func: Callable, properties: TaskNodeProperties,
+                 pre_hook: Optional[Callable[[], None]], post_hook: Optional[Callable[[], None]]):
         """
         reporesents a task leaf node in the workflow graph
         Parameters
@@ -282,6 +285,8 @@ class TaskNode(Node):
         """
         super().__init__(func)
         self.properties = properties
+        self._pre_hook = pre_hook
+        self._post_hook = post_hook
 
     def __call__(self, *args, **kwargs) -> Any:
         """
@@ -295,7 +300,7 @@ class TaskNode(Node):
             conditions = collect_conditions()
             if all([condition.value for condition in conditions]):
                 try:
-                    return self._func(*args, **cleaned_kwargs)
+                    return self._call_task_func_with_hooks(args, cleaned_kwargs)
                 except Exception as e:
                     if not continue_on_fail_handler:
                         raise e
@@ -357,6 +362,8 @@ class TaskNode(Node):
                 id=guid,
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
+                pre_func_hooks=self._pre_hook,
+                post_func_hooks=self._post_hook,
                 wait_for=self._get_wait(kwargs),
                 continue_on_fail=kwargs.get("continue_on_fail"),
                 exit=exit_handler,
@@ -371,6 +378,15 @@ class TaskNode(Node):
             return list(outputs.values())[0]
         else:
             return outputs
+
+    def _call_task_func_with_hooks(self, args, cleaned_kwargs):
+        if self._pre_hook is not None:
+            self._pre_hook()
+        try:
+            return self._func(*args, **cleaned_kwargs)
+        finally:
+            if self._post_hook is not None:
+                self._post_hook()
 
 
 class WorkflowTemplateNode(DAGNode):
@@ -462,6 +478,8 @@ class WorkflowTemplateNode(DAGNode):
                 id=guid,
                 name=sanitize_name(self._func.__name__),
                 func=self._func,
+                pre_func_hooks=None,
+                post_func_hooks=None,
                 wait_for=self._get_wait(kwargs),
                 arguments=self._arguments(arguments),
                 outputs=outputs,

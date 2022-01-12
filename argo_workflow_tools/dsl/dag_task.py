@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Callable, Mapping, Union, List
+from typing import Callable, Mapping, Union, List, Optional
 
 from argo_workflow_tools.dsl.input_definition import InputDefinition
 from argo_workflow_tools.dsl.node_properties import (
@@ -18,6 +18,8 @@ class NodeReference(object):
     name: str
     outputs: Mapping[str, InputDefinition]
     func: Callable
+    pre_func_hooks: Optional[Callable[[], None]]
+    post_func_hooks: Optional[Callable[[], None]]
     node: str
     arguments: Mapping[str, Union[InputDefinition]]
     wait_for: List[InputDefinition]
