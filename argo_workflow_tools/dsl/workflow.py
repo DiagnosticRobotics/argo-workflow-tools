@@ -39,7 +39,7 @@ class WorkflowTemplate:
         self.on_exit: Callable = on_exit
         self.arguments: Union[Dict[str, Any], List[Union[argo.Artifact, argo.Parameter]]] = arguments
         self.namespace: str = namespace
-        self.labels: Dict[str, str] = labels
+        self.labels: Dict[str, str] = labels if labels is not None else dict()
         self.annotations: Dict[str, str] = annotations
 
     def to_model(self) -> argo.WorkflowTemplate:
