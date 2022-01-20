@@ -109,7 +109,7 @@ class CronWorkflow:
         self.entrypoint: Callable = entrypoint
         self.arguments: Dict[str, str] = arguments
         self.namespace: str = namespace
-        self.labels: Dict[str, str] = labels
+        self.labels: Dict[str, str] = labels if labels is not None else dict()
         self.annotations: Dict[str, str] = annotations
         self.schedule = schedule
         self.concurrency_policy = concurrency_policy
@@ -169,7 +169,7 @@ class Workflow:
         self.entrypoint: Callable = entrypoint
         self.arguments: Dict[str, str] = arguments
         self.namespace: str = namespace
-        self.labels: Dict[str, str] = labels
+        self.labels: Dict[str, str] = labels if labels is not None else dict()
         self.annotations: Dict[str, str] = annotations
         self.generated_name = generated_name
         self.on_exit: Callable = on_exit
