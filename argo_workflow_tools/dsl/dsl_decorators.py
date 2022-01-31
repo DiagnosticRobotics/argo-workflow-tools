@@ -57,6 +57,7 @@ def WorkflowTemplate(
     annotations: Dict[str, str] = None,
     parallelism: int = None,
     retry_strategy: argo.RetryStrategy = None,
+    on_exit: Callable = None
 ) -> Callable[[Callable], Node]:
     if inputs is None:
         inputs = {}
@@ -71,6 +72,7 @@ def WorkflowTemplate(
             name=name,
             namespace=namespace,
             arguments=arguments,
+            on_exit=on_exit,
             properties=DAGNodeProperties(
                 active_deadline_seconds=active_deadline_seconds,
                 fail_fast=fail_fast,
