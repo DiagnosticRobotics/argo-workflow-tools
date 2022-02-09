@@ -22,7 +22,7 @@ class DefaultParameterBuilder(ParameterBuilder):
         if self.type_annotation and issubclass(self.type_annotation, BaseModel):
             return {
                 "import json",
-                f"import {self.type_annotation.__module__}.{self.type_annotation.__name__}\n",
+                f"from {self.type_annotation.__module__} import {self.type_annotation.__name__}\n",
             }
         else:
             return {"import json"}
@@ -56,7 +56,7 @@ class DefaultParameterBuilder(ParameterBuilder):
                 + f"    {variable_name} = {{{{inputs.parameters.{parameter_name}}}}}\n"
             )
         if issubclass(self.type_annotation, BaseModel):
-            return f"{self.type_annotation.__name__}.parse_raw('{{{{inputs.parameters.{parameter_name}}}}}')"
+            return f"{variable_name}={self.type_annotation.__name__}.parse_raw('{{{{inputs.parameters.{parameter_name}}}}}')"
         else:
             return f"{variable_name}=json.loads('{{{{inputs.parameters.{parameter_name}}}}}')"
 
