@@ -2,7 +2,9 @@ from dataclasses import asdict, dataclass
 from typing import List
 
 import requests
+from requests.adapters import HTTPAdapter
 from requests.auth import AuthBase
+from urllib3 import Retry
 
 from argo_workflow_tools.argo_options import ArgoOptions
 
@@ -101,11 +103,17 @@ class ArgoHttpClient:
             )
         return response.json()
 
-    def get_workflow(self, namespace, name):
-        response = requests.get(
-            f"{self._url}/api/v1/workflows/{namespace}/{name}",
-            auth=self._get_authorization(),
-        )
+    def get_workflow(self, namespace, name, with_retries=False):
+        max_retries = 5 if with_retries else 0
+        try:
+            response = self._get_with_retries(
+                f"{self._url}/api/v1/workflows/{namespace}/{name}",
+                max_retries,
+                auth=self._get_authorization()
+            )
+        except requests.exceptions.RetryError as e:
+            raise ArgoApiException() from e
+
         if response.status_code != 200:
             raise ArgoApiException(
                 status=response.status_code, reason=response.reason, http_resp=response
@@ -155,3 +163,17 @@ class ArgoHttpClient:
                 status=response.status_code, reason=response.reason, http_resp=response
             )
         return response.json()
+
+    @staticmethod
+    def _get_with_retries(url: str, max_retries_count: int, **request_kwargs):
+        http_adapter = HTTPAdapter(
+            max_retries=Retry(total=max_retries_count,
+                              backoff_factor=0.3,
+                              status_forcelist=[500, 502, 503, 504])
+        )
+        with requests.Session() as session:
+            session.mount('http://', http_adapter)
+            session.mount('https://', http_adapter)
+
+            response = session.get(url, **request_kwargs)
+            return response

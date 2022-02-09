@@ -4,7 +4,7 @@ from typing import Optional
 from argo_workflow_tools.argo_http_client import ArgoHttpClient
 from argo_workflow_tools.terminal_loading_animation import TerminalLoadingAnimation
 
-POLLING_INTERVAL_SECONDS = 1.0
+POLLING_INTERVAL_SECONDS = 3.0
 RUNNING_PHASE = "Running"
 
 
@@ -24,7 +24,7 @@ class WorkflowStatusChecker:
         # using the default value _preload_content=True causes some s3 credentials errors, so
         # working with the raw rest api responses will do
         workflow_current_status_response = self._argo_http_client.get_workflow(
-            namespace=self._workflow_namespace, name=self._workflow_name
+            namespace=self._workflow_namespace, name=self._workflow_name, with_retries=True
         )
 
         self._current_phase = workflow_current_status_response["status"].get(
