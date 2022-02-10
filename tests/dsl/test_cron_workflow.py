@@ -21,7 +21,9 @@ def test_cron_wokrflow_schedule():
         entrypoint=command_hello,
         arguments={"name": "Brian"},
         schedule="* * * * *",
+        workflow_labels={'key1': 'val1'}
     )
     model = workflow.to_model()
     assert model.kind == "CronWorkflow"
     assert model.spec.schedule == "* * * * *"
+    assert model.spec.workflow_metadata.labels['key1'] == 'val1'

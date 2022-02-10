@@ -19,8 +19,10 @@ class WorkflowTemplate:
         entrypoint: Callable,
         arguments: Union[Dict[str, Any], List[Union[argo.Artifact, argo.Parameter]]] = None,
         namespace: str = None,
-        labels=None,
-        annotations=None,
+        labels: Dict[str, str] = None,
+        annotations: Dict[str, str] = None,
+        workflow_labels: Dict[str, str] = None,
+        workflow_annotations: Dict[str, str] = None,
         on_exit: Callable = None,
     ):
         """
@@ -41,6 +43,8 @@ class WorkflowTemplate:
         self.namespace: str = namespace
         self.labels: Dict[str, str] = labels if labels is not None else dict()
         self.annotations: Dict[str, str] = annotations
+        self.workflow_labels: Dict[str, str] = workflow_labels
+        self.workflow_annotations: Dict[str, str] = workflow_annotations
 
     def to_model(self) -> argo.WorkflowTemplate:
         """
@@ -48,6 +52,7 @@ class WorkflowTemplate:
         """
         spec = compile_dag(self.entrypoint, self.on_exit)
         spec.arguments = get_arguments(self.arguments)
+
         return argo.WorkflowTemplate(
             apiVersion="argoproj.io/v1alpha1",
             kind="WorkflowTemplate",
@@ -62,7 +67,8 @@ class WorkflowTemplate:
                 entrypoint=spec.entrypoint,
                 onExit=spec.on_exit,
                 arguments=spec.arguments,
-            ),
+                workflowMetadata=k8s_v1.ObjectMeta(labels=self.workflow_labels, annotations=self.workflow_annotations)
+            )
         )
 
     def to_dict(self) -> dict:
@@ -89,6 +95,8 @@ class CronWorkflow:
         namespace: str = None,
         labels=None,
         annotations=None,
+        workflow_labels: Dict[str, str] = None,
+        workflow_annotations: Dict[str, str] = None,
         on_exit: Callable = None,
         suspend: bool = False
     ):
@@ -111,6 +119,8 @@ class CronWorkflow:
         self.namespace: str = namespace
         self.labels: Dict[str, str] = labels if labels is not None else dict()
         self.annotations: Dict[str, str] = annotations
+        self.workflow_labels: Dict[str, str] = workflow_labels
+        self.workflow_annotations: Dict[str, str] = workflow_annotations
         self.schedule = schedule
         self.concurrency_policy = concurrency_policy
         self.on_exit: Callable = on_exit
@@ -126,8 +136,10 @@ class CronWorkflow:
             workflowSpec=wf_spec,
             schedule=self.schedule,
             concurrencyPolicy=self.concurrency_policy,
-            suspend=self.suspend
+            suspend=self.suspend,
+            workflowMetadata=k8s_v1.ObjectMeta(labels=self.workflow_labels, annotations=self.workflow_annotations)
         )
+
         return argo.CronWorkflow(
             apiVersion="argoproj.io/v1alpha1",
             kind="CronWorkflow",
