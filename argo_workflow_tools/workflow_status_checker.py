@@ -4,7 +4,7 @@ from typing import Optional
 from argo_workflow_tools.argo_http_client import ArgoHttpClient
 from argo_workflow_tools.terminal_loading_animation import TerminalLoadingAnimation
 
-POLLING_INTERVAL_SECONDS = 3.0
+POLLING_INTERVAL_SECONDS = 20.0
 RUNNING_PHASE = "Running"
 
 
