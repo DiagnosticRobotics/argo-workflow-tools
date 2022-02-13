@@ -466,17 +466,17 @@ def _build_dag_template(node: DAGNode) -> argo.Template:
 
     tasks = [_build_dag_task(dag_task, unique_node_names_map) for dag_task in dag_tasks]
 
-    dag_tamplate = argo.Template(
+    dag_template = argo.Template(
         dag=argo.DagTemplate(tasks=list(tasks)),
         name=sanitize_name(node.func.__name__),
         outputs=get_outputs(dag_outputs),
         inputs=get_inputs(dag_inputs),
     )
 
-    dag_tamplate = _fill_dag_metadata(dag_tamplate, node.properties)
+    dag_template = _fill_dag_metadata(dag_template, node.properties)
 
-    workflow_template_collector.add_template(dag_tamplate)
-    return dag_tamplate
+    workflow_template_collector.add_template(dag_template)
+    return dag_template
 
 
 def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None) -> argo.WorkflowSpec:

@@ -55,6 +55,8 @@ def WorkflowTemplate(
     fail_fast: bool = None,
     labels: Dict[str, str] = None,
     annotations: Dict[str, str] = None,
+    workflow_labels: Dict[str, str] = None,
+    workflow_annotations: Dict[str, str] = None,
     parallelism: int = None,
     retry_strategy: argo.RetryStrategy = None,
     on_exit: Callable = None
@@ -78,6 +80,8 @@ def WorkflowTemplate(
                 fail_fast=fail_fast,
                 labels=labels,
                 annotations=annotations,
+                workflow_labels=workflow_labels,
+                workflow_annotations=workflow_annotations,
                 parallelism=parallelism,
                 retry_strategy=retry_strategy,
                 inputs=inputs,
