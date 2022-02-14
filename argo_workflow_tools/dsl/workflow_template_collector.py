@@ -64,7 +64,7 @@ def add_template(template: Template) -> None:
 
 def collect_templates() -> List[Template]:
     """
-    return collected tempaltes in the current workflow context
+    return collected templates in the current workflow context
     """
     return _workflow_templates.get([])
 

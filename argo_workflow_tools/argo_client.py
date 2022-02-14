@@ -38,6 +38,7 @@ class ArgoClient:
         params: Dict[str, any] = None,
         namespace: str = None,
         annotations={},
+        labels={},
         wait: bool = False,
     ) -> WorkflowResult:
         """[summary]
@@ -46,7 +47,8 @@ class ArgoClient:
             template_name (str): template
             params (Dict[str, any], optional): workflow parameters. Defaults to None.
             namespace (str, optional): override the namespace to run the workflow. Defaults to None.
-            annotations (dict, optional): workflow annoteations. Defaults to {}.
+            annotations (dict, optional): workflow annotations. Defaults to {}.
+            labels (dict, optional): workflow labels. Defaults to {}.
             wait (bool, optional): block program and wait for workflow to finish. Defaults to False.
 
         Returns:
@@ -56,14 +58,18 @@ class ArgoClient:
         if namespace is None:
             namespace = self._options.namespace
 
-        parameters = list(map(lambda x: f"{x[0]}={x[1]}", params.items()))
+        parameters = [f"{key}={val}" for key, val in params.items()]
+        annotations = [f"{key}={val}" for key, val in annotations.items()]
+        labels = [f"{key}={val}" for key, val in labels.items()]
+        labels.append("submit-from-api=true")
+        sep = ','
 
         body = ArgoSubmitRequestBody(
             namespace=namespace,
             resourceKind="WorkflowTemplate",
             resourceName=template_name,
             submitOptions=SubmitOptions(
-                parameters=parameters, labels="submit-from-api=true"
+                parameters=parameters, labels=sep.join(labels), annotations=sep.join(annotations)
             ),
         )
         return self._submit_workflow(namespace, body, wait)

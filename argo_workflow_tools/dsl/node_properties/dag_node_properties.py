@@ -12,5 +12,7 @@ class DAGNodeProperties:
     fail_fast: bool = None
     labels: Dict[str, str] = None
     annotations: Dict[str, str] = None
+    workflow_labels: Dict[str, str] = None
+    workflow_annotations: Dict[str, str] = None
     parallelism: int = None
-    retry_strategy: int = argo.RetryStrategy
+    retry_strategy: argo.RetryStrategy = argo.RetryStrategy()

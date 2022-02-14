@@ -38,6 +38,7 @@ class ArgoApiException(Exception):
 class SubmitOptions:
     parameters: List[str]
     labels: str
+    annotations: str
 
 
 @dataclass
