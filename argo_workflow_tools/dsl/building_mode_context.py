@@ -6,3 +6,5 @@ making sure that without calling the function in a context of a workflow compila
 the function will run as-is.
 """
 dag_building_mode: ContextVar[bool] = ContextVar("dag_building_mode", default=False)
+
+dag_submit_mode: ContextVar[bool] = ContextVar("dag_submit_mode", default=None)
