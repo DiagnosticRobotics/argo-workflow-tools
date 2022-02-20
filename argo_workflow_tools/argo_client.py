@@ -1,4 +1,7 @@
+import contextlib
 from typing import Dict
+
+from pydantic import BaseModel
 
 from argo_workflow_tools.argo_http_client import (
     ArgoApiException,
@@ -7,6 +10,7 @@ from argo_workflow_tools.argo_http_client import (
     SubmitOptions,
 )
 from argo_workflow_tools.argo_options import ArgoOptions
+import argo_workflow_tools.dsl.building_mode_context as building_mode_context
 from argo_workflow_tools.exceptions.workflow_not_found_exception import (
     WorkflowNotFoundException,
 )
@@ -16,13 +20,18 @@ from argo_workflow_tools.workflow_status_checker import WorkflowStatusChecker
 
 
 def _log_workflow_web_page_link(
-    workflow_namespace, workflow_name, argo_server_uri, logging_func
+        workflow_namespace, workflow_name, argo_server_uri, logging_func
 ):
     workflow_web_page_link = (
         f"{argo_server_uri}/workflows/{workflow_namespace}/{workflow_name}"
     )
     logging_func(f"workflow's link - {workflow_web_page_link}")
 
+
+def _parse_parameter(val: any) -> str:
+    if isinstance(val, BaseModel):
+        return val.json()
+    return val
 
 class ArgoClient:
     """Client to run an manage argo workflows"""
@@ -33,13 +42,13 @@ class ArgoClient:
         self._options = options
 
     def submit(
-        self,
-        template_name: str,
-        params: Dict[str, any] = None,
-        namespace: str = None,
-        annotations={},
-        labels={},
-        wait: bool = False,
+            self,
+            template_name: str,
+            params: Dict[str, any] = None,
+            namespace: str = None,
+            annotations={},
+            labels={},
+            wait: bool = False,
     ) -> WorkflowResult:
         """[summary]
 
@@ -58,7 +67,7 @@ class ArgoClient:
         if namespace is None:
             namespace = self._options.namespace
 
-        parameters = [f"{key}={val}" for key, val in params.items()]
+        parameters = [f"{key}={_parse_parameter(val)}" for key, val in params.items()]
         annotations = [f"{key}={val}" for key, val in annotations.items()]
         labels = [f"{key}={val}" for key, val in labels.items()]
         labels.append("submit-from-api=true")
@@ -75,7 +84,7 @@ class ArgoClient:
         return self._submit_workflow(namespace, body, wait)
 
     def create(
-        self, workflow: Dict[str, any], namespace: str = None, wait: bool = False
+            self, workflow: Dict[str, any], namespace: str = None, wait: bool = False
     ) -> WorkflowResult:
         """[summary]
 
@@ -94,7 +103,7 @@ class ArgoClient:
         return self._create_workflow(namespace, body, wait, None)
 
     def _submit_workflow(
-        self, namespace: str, request: ArgoSubmitRequestBody, wait: bool
+            self, namespace: str, request: ArgoSubmitRequestBody, wait: bool
     ) -> WorkflowResult:
         try:
 
@@ -179,3 +188,12 @@ class ArgoClient:
 
         except ArgoApiException:
             raise
+
+    @contextlib.contextmanager
+    def run_workflow(self):
+        token = building_mode_context.dag_submit_mode.set(self)
+        try:
+            yield None
+        finally:
+            building_mode_context.dag_submit_mode.reset(token)
+
