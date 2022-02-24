@@ -11,7 +11,7 @@ from argo_workflow_tools.dsl.node_properties import (
 @dataclass
 class NodeReference(object):
     """
-    Represents a result referece from a called node
+    Represents a result reference from a called node
     """
 
     id: str
@@ -31,7 +31,7 @@ class NodeReference(object):
 @dataclass
 class DAGReference(NodeReference):
     """
-    Represents a result referece from a called DAG
+    Represents a result reference from a called DAG
     """
 
     properties: DAGNodeProperties
@@ -40,7 +40,7 @@ class DAGReference(NodeReference):
 @dataclass
 class TaskReference(NodeReference):
     """
-    Represents a result referece from a called task
+    Represents a result reference from a called task
     """
 
     properties: TaskNodeProperties
@@ -52,7 +52,7 @@ class TaskReference(NodeReference):
 @dataclass
 class WorkflowTemplateReference(NodeReference):
     """
-    Represents a result referece from a called task
+    Represents a result reference from a called task
     """
 
     workflow_template_name: str

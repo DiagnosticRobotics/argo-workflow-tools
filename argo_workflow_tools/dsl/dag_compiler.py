@@ -217,7 +217,7 @@ def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
     return "&&".join(condition_expr)
 
 
-def _build_exit_hook(exit_hook: Callable) -> Dict[str, argo.LifecycleHook]:
+def _build_exit_hook(exit_hook: Callable, use_workflow_template_refs: bool) -> Dict[str, argo.LifecycleHook]:
     if exit_hook:
         ctx = copy_context()
         dag_output = ctx.run(exit_hook)
@@ -227,7 +227,7 @@ def _build_exit_hook(exit_hook: Callable) -> Dict[str, argo.LifecycleHook]:
             for input_name, input_type in dag_tasks[0].arguments.items()
         ]
         if isinstance(dag_tasks[0], DAGReference):
-            _build_dag_template(dag_tasks[0])
+            _build_dag_template(dag_tasks[0], use_workflow_template_refs)
         elif isinstance(dag_tasks[0], TaskReference):
             _build_task_template(dag_tasks[0])
         arguments = get_arguments(arguments)
@@ -240,7 +240,8 @@ def _build_exit_hook(exit_hook: Callable) -> Dict[str, argo.LifecycleHook]:
 
 
 def _build_dag_task(
-    dag_task: NodeReference, unique_node_names_map: Dict[str, str]
+    dag_task: NodeReference, unique_node_names_map: Dict[str, str],
+    use_workflow_template_refs: bool
 ) -> argo.DagTask:
     potential_deps = list(dag_task.arguments.values())
     potential_deps.extend(list() if dag_task.wait_for is None else dag_task.wait_for)
@@ -260,11 +261,12 @@ def _build_dag_task(
         for input_name, input_type in dag_task.arguments.items()
     ]
 
-    hook = _build_exit_hook(dag_task.exit)
+    hook = _build_exit_hook(dag_task.exit, use_workflow_template_refs)
     continue_on = argo.ContinueOn(failed=dag_task.continue_on_fail) if dag_task.continue_on_fail else None
 
-    if isinstance(dag_task, DAGReference):
-        dag = _build_dag_template(dag_task.node)
+    if isinstance(dag_task, DAGReference) or \
+            (isinstance(dag_task, WorkflowTemplateReference) and use_workflow_template_refs is False):
+        dag = _build_dag_template(dag_task.node, use_workflow_template_refs)
         task = argo.DagTask(
             name=dag_task.id,
             template=dag.name,
@@ -427,12 +429,13 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
     return task_template
 
 
-def _build_dag_template(node: DAGNode) -> argo.Template:
+def _build_dag_template(node: DAGNode, use_workflow_template_refs: bool) -> argo.Template:
     """
     Builds an Argo DAG Template out of a DAGNode
     Parameters
     ----------
     node : DAGNode to parse into a DAG Template
+    use_workflow_template_refs : boolean that determines whether to compile workflow template inline or use templateRefs
 
     Returns
     -------
@@ -464,7 +467,7 @@ def _build_dag_template(node: DAGNode) -> argo.Template:
     unique_node_names_map = _generate_task_name_from_node_uid(dag_tasks)
     dag_outputs = _build_dag_outputs(dag_output)
 
-    tasks = [_build_dag_task(dag_task, unique_node_names_map) for dag_task in dag_tasks]
+    tasks = [_build_dag_task(dag_task, unique_node_names_map, use_workflow_template_refs) for dag_task in dag_tasks]
 
     dag_template = argo.Template(
         dag=argo.DagTemplate(tasks=list(tasks)),
@@ -479,13 +482,14 @@ def _build_dag_template(node: DAGNode) -> argo.Template:
     return dag_template
 
 
-def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None) -> argo.WorkflowSpec:
+def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None, use_workflow_template_refs: bool = True) -> argo.WorkflowSpec:
     """
     compiles a DAG annotated function into a WorkflowSpec arg model
     Parameters
     ----------
     entrypoint : DAG entrypoint
     on_exit : on_exit DAG entrypoint
+    use_workflow_template_refs : boolean that determines whether to compile workflow template inline or use templateRefs
 
     Returns
     -------
@@ -498,10 +502,10 @@ def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None) -> argo.WorkflowSp
             raise ValueError(
                 f"{entrypoint.__name__} is not decorated with DAG or Task decorator"
             )
-        result = _build_dag_template(entrypoint)
+        result = _build_dag_template(entrypoint, use_workflow_template_refs)
 
         if on_exit:
-            on_exit_result = _build_dag_template(on_exit).name
+            on_exit_result = _build_dag_template(on_exit, use_workflow_template_refs).name
         else:
             on_exit_result = None
 

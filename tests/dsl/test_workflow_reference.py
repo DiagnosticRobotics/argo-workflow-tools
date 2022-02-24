@@ -13,10 +13,10 @@ def say_hello(name: str):
 
 @dsl.WorkflowTemplate(
     name="model-train-cookbook",
-    outputs={"selected-model": DefaultParameterBuilder(any)},
+    outputs={"result": DefaultParameterBuilder(any)},
 )
 def model_train_template(name):
-    pass
+    return say_hello(name)
 
 
 @dsl.DAG()
@@ -25,13 +25,24 @@ def wf_hello():
     return message
 
 
-def test_diamond_params_run_independently():
+def test_dag_runs_independently():
     result = wf_hello()
-    assert result == None
+    assert result == "hello jose"
 
 
-def test_diammond_params_dag():
+def test_wf_params_compilation():
     workflow = Workflow(
         name="hello-world", entrypoint=wf_hello, arguments={"name": "Brian"}
     )
-    print(workflow.to_yaml())
+    compiled = workflow.to_yaml(use_workflow_template_refs=True)
+    assert "templateRef" in compiled
+    print(compiled)
+
+
+def test_wf_params_compilation_without_refs():
+    workflow = Workflow(
+        name="hello-world", entrypoint=wf_hello, arguments={"name": "Brian"}
+    )
+    compiled = workflow.to_yaml(use_workflow_template_refs=False)
+    assert "templateRef" not in compiled
+    print(compiled)
