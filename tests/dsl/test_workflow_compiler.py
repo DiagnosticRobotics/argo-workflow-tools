@@ -45,7 +45,7 @@ def test_export_to_yaml():
 
 def test_compiled_workflow_should_contain_the_code_of_its_dag_tasks():
     workflow_model = compile_workflow(simple_workflow).to_model()
-    say_hello_task_template = next(filter(lambda template: template.name == 'say-hello',
+    say_hello_task_template = next(filter(lambda template: template.name.startswith('say-hello-'),
                                           workflow_model.spec.templates))
 
     assert 'message = f"hello {name}"' in say_hello_task_template.script.source
@@ -53,7 +53,7 @@ def test_compiled_workflow_should_contain_the_code_of_its_dag_tasks():
 
 def test_compiled_workflow_should_contain_task_hooks():
     workflow_model = compile_workflow(simple_workflow_with_task_hooks).to_model()
-    say_hello_task_template = next(filter(lambda template: template.name == 'say-hello-with-hooks',
+    say_hello_task_template = next(filter(lambda template: template.name.startswith('say-hello-with-hooks-'),
                                           workflow_model.spec.templates))
 
     assert 'running from pre hook' in say_hello_task_template.script.source

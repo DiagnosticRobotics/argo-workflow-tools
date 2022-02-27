@@ -28,7 +28,7 @@ def test_pydantic_input_parameter_compilation():
     model = compiled_template.to_model()
 
     # Assert
-    say_hello_task_template = next(filter(lambda t: t.name == 'say-hello', model.spec.templates))
+    say_hello_task_template = next(filter(lambda t: t.name.startswith('say-hello-'), model.spec.templates))
     pydantic_input_parsing_script_lines = re.findall(
         rf'.*=.*{PydanticObj.__name__}.parse_raw\(.*\).*', say_hello_task_template.script.source)
     assert len(pydantic_input_parsing_script_lines) == 1, \
@@ -51,7 +51,7 @@ def test_pydantic_output_parameter_compilation():
     model = compiled_template.to_model()
 
     # Assert
-    say_hello_task_template = next(filter(lambda t: t.name == 'say-hello', model.spec.templates))
+    say_hello_task_template = next(filter(lambda t: t.name.startswith('say-hello-'), model.spec.templates))
     pydantic_output_formatting_script_lines = re.findall(
         r'file\.write(.*\.json\(\))', say_hello_task_template.script.source)
     assert len(pydantic_output_formatting_script_lines) == 1, \

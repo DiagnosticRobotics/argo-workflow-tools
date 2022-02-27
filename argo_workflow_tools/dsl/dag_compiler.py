@@ -26,7 +26,7 @@ from argo_workflow_tools.dsl.utils.utils import (
     get_arguments,
     get_inputs,
     get_outputs,
-    sanitize_name,
+    sanitize_name, generate_template_name_from_func,
 )
 from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
 
@@ -172,8 +172,7 @@ def _fill_dag_metadata(task_template: argo.Template, properties: DAGNodeProperti
 
 def _generate_task_name_from_node_uid(nodes: List[NodeReference]) -> Dict[str, str]:
     node_names_by_id = {}
-    # groupby only groups consecutive elements therefore we need to sort them by name
-    # first
+    # groupby only groups consecutive elements therefore we need to sort them by name first
     sorted_nodes = sorted(nodes, key=lambda node_reference: node_reference.name)
     for name, group in groupby(
         sorted_nodes, key=lambda node_reference: node_reference.name
@@ -414,7 +413,7 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
     task_outputs = get_outputs(task_outputs)
 
     task_template = argo.Template(
-        name=sanitize_name(task_node.func.__name__),
+        name=generate_template_name_from_func(task_node.func),
         inputs=get_inputs(list(task_inputs.values())),
         script=argo.ScriptTemplate(
             image=task_node.properties.image, source=source, command=["python"]
@@ -471,7 +470,7 @@ def _build_dag_template(node: DAGNode, use_workflow_template_refs: bool) -> argo
 
     dag_template = argo.Template(
         dag=argo.DagTemplate(tasks=list(tasks)),
-        name=sanitize_name(node.func.__name__),
+        name=generate_template_name_from_func(node.func),
         outputs=get_outputs(dag_outputs),
         inputs=get_inputs(dag_inputs),
     )
