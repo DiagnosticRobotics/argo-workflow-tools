@@ -25,13 +25,19 @@ def delete_none(_dict: dict) -> dict:
         return _dict
     return _dict
 
+def _parse_parameter(val: any) -> str:
+    if isinstance(val, BaseModel):
+        return val.json()
+    if isinstance(val, bool):
+        return json.dumps(val)
+    return val
 
 def _convert_params(
     args: Union[Dict[str, str], List[Union[argo.Arguments, argo.Parameter]]]
 ) -> Tuple[List[argo.Artifact], List[argo.Parameter]]:
     if isinstance(args, dict):
         parameters = [
-            argo.Parameter(name=sanitize_name(key, snake_case=True), value=value)
+            argo.Parameter(name=sanitize_name(key, snake_case=True), value=_parse_parameter(value))
             for key, value in args.items()
         ]
         artifacts = []

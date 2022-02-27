@@ -1,4 +1,5 @@
 import contextlib
+import json
 from dataclasses import dataclass
 from argo_workflow_tools.dsl import building_mode_context as context
 from argo_workflow_tools.dsl.input_definition import InputDefinition
@@ -11,6 +12,8 @@ from argo_workflow_tools.dsl.workflow_template_collector import (
 def extract_op(operand: any):
     if isinstance(operand, InputDefinition):
         return operand.path()
+    if isinstance(operand, bool):
+        return json.dumps(operand)
     else:
         return str(operand)
 

@@ -1,4 +1,5 @@
 import contextlib
+import json
 from typing import Dict
 
 from pydantic import BaseModel
@@ -31,6 +32,8 @@ def _log_workflow_web_page_link(
 def _parse_parameter(val: any) -> str:
     if isinstance(val, BaseModel):
         return val.json()
+    if isinstance(val, bool):
+        return json.dumps(val)
     return val
 
 class ArgoClient:
