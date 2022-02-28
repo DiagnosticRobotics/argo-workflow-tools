@@ -34,7 +34,7 @@ def test_wf_params_compilation():
     workflow = Workflow(
         name="hello-world", entrypoint=wf_hello, arguments={"name": "Brian"}
     )
-    compiled = workflow.to_yaml(use_workflow_template_refs=True)
+    compiled = workflow.to_yaml(embed_workflow_templates=False)
     assert "templateRef" in compiled
     print(compiled)
 
@@ -43,6 +43,6 @@ def test_wf_params_compilation_without_refs():
     workflow = Workflow(
         name="hello-world", entrypoint=wf_hello, arguments={"name": "Brian"}
     )
-    compiled = workflow.to_yaml(use_workflow_template_refs=False)
+    compiled = workflow.to_yaml(embed_workflow_templates=True)
     assert "templateRef" not in compiled
     print(compiled)

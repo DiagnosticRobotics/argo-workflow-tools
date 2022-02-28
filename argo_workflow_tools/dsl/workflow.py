@@ -46,11 +46,11 @@ class WorkflowTemplate:
         self.workflow_labels: Dict[str, str] = workflow_labels
         self.workflow_annotations: Dict[str, str] = workflow_annotations
 
-    def to_model(self, use_workflow_template_refs: bool = True) -> argo.WorkflowTemplate:
+    def to_model(self, embed_workflow_templates: bool = False) -> argo.WorkflowTemplate:
         """
         convert workflow to pydantic model
         """
-        spec = compile_dag(self.entrypoint, self.on_exit, use_workflow_template_refs)
+        spec = compile_dag(self.entrypoint, self.on_exit, embed_workflow_templates)
         spec.arguments = get_arguments(self.arguments)
 
         return argo.WorkflowTemplate(
@@ -71,17 +71,17 @@ class WorkflowTemplate:
             )
         )
 
-    def to_dict(self, use_workflow_template_refs: bool = True) -> dict:
+    def to_dict(self, embed_workflow_templates: bool = False) -> dict:
         """
         convert workflow to dictionary
         """
-        return delete_none(self.to_model(use_workflow_template_refs).dict(by_alias=True))
+        return delete_none(self.to_model(embed_workflow_templates).dict(by_alias=True))
 
-    def to_yaml(self, use_workflow_template_refs: bool = True) -> str:
+    def to_yaml(self, embed_workflow_templates: bool = False) -> str:
         """
         convert workflow to yaml
         """
-        return yaml.dump(self.to_dict(use_workflow_template_refs))
+        return yaml.dump(self.to_dict(embed_workflow_templates))
 
 
 class CronWorkflow:
@@ -126,11 +126,11 @@ class CronWorkflow:
         self.on_exit: Callable = on_exit
         self.suspend: bool = suspend
 
-    def to_model(self, use_workflow_template_refs: bool = True) -> argo.CronWorkflow:
+    def to_model(self, embed_workflow_templates: bool = False) -> argo.CronWorkflow:
         """
         convert workflow to pydantic model
         """
-        wf_spec = compile_dag(self.entrypoint, self.on_exit, use_workflow_template_refs)
+        wf_spec = compile_dag(self.entrypoint, self.on_exit, embed_workflow_templates)
         wf_spec.arguments = get_arguments(self.arguments)
         spec = argo.CronWorkflowSpec(
             workflowSpec=wf_spec,
@@ -152,17 +152,17 @@ class CronWorkflow:
             spec=spec,
         )
 
-    def to_dict(self, use_workflow_template_refs: bool = True) -> dict:
+    def to_dict(self, embed_workflow_templates: bool = False) -> dict:
         """
         convert workflow to dictionary
         """
-        return delete_none(self.to_model(use_workflow_template_refs).dict(by_alias=True))
+        return delete_none(self.to_model(embed_workflow_templates).dict(by_alias=True))
 
-    def to_yaml(self, use_workflow_template_refs: bool = True) -> str:
+    def to_yaml(self, embed_workflow_templates: bool = False) -> str:
         """
         convert workflow to dictionary
         """
-        return yaml.dump(self.to_dict(use_workflow_template_refs))
+        return yaml.dump(self.to_dict(embed_workflow_templates))
 
 
 class Workflow:
@@ -186,7 +186,7 @@ class Workflow:
         self.generated_name = generated_name
         self.on_exit: Callable = on_exit
 
-    def to_model(self, use_workflow_template_refs: bool = True) -> argo.Workflow:
+    def to_model(self, embed_workflow_templates: bool = False) -> argo.Workflow:
         """
         convert workflow to pydantic model
         """
@@ -194,7 +194,7 @@ class Workflow:
             raise ValueError(
                 "you must specify at least name or generated name arguments for a workflow"
             )
-        spec = compile_dag(self.entrypoint, self.on_exit, use_workflow_template_refs)
+        spec = compile_dag(self.entrypoint, self.on_exit, embed_workflow_templates)
         spec.arguments = get_arguments(self.arguments)
         workflow = argo.Workflow(
             apiVersion="argoproj.io/v1alpha1",
@@ -210,14 +210,14 @@ class Workflow:
         )
         return workflow
 
-    def to_dict(self, use_workflow_template_refs: bool = True) -> dict:
+    def to_dict(self, embed_workflow_templates: bool = False) -> dict:
         """
         convert workflow to dictionary
         """
-        return delete_none(self.to_model(use_workflow_template_refs).dict(by_alias=True))
+        return delete_none(self.to_model(embed_workflow_templates).dict(by_alias=True))
 
-    def to_yaml(self, use_workflow_template_refs: bool = True) -> str:
+    def to_yaml(self, embed_workflow_templates: bool = False) -> str:
         """
         convert workflow to dictionary
         """
-        return yaml.dump(self.to_dict(use_workflow_template_refs))
+        return yaml.dump(self.to_dict(embed_workflow_templates))

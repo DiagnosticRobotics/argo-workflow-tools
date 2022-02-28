@@ -47,7 +47,7 @@ def test_dag_compilation_generates_one_template_per_method_with_unique_name():
     workflow = Workflow(
         name="hello-world", entrypoint=dag, arguments={"name": "Brian"}
     )
-    compiled = workflow.to_model(use_workflow_template_refs=False)
+    compiled = workflow.to_model(embed_workflow_templates=True)
     templates = compiled.spec.templates
     assert len(templates) == 5
 
