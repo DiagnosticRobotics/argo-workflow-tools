@@ -50,7 +50,7 @@ _workflow_templates: ContextVar[List[Template]] = ContextVar("workflow_templates
 
 def add_template(template: Template) -> None:
     """
-    add tempalte to the current workflow compilation flow
+    add template to the current workflow compilation flow
     Parameters
     ----------
     template : called template reference

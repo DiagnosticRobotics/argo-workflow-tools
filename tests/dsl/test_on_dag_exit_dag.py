@@ -54,7 +54,7 @@ def test_on_exit_on_task_compile():
     hooks = model.spec.templates[2].dag.tasks[0].hooks
     assert hooks is not None
     assert hooks["exit"] is not None
-    assert hooks["exit"].template == "say-goodbye"
+    assert hooks["exit"].template.startswith("say-goodbye-")
     assert hooks["exit"].arguments.parameters[0].name == "name"
     assert hooks["exit"].arguments.parameters[0].value == "{{inputs.parameters.name}}"
 
@@ -71,6 +71,6 @@ def test_on_exit_on_dag_compile():
     hooks = model.spec.templates[3].dag.tasks[0].hooks
     assert hooks is not None
     assert hooks["exit"] is not None
-    assert hooks["exit"].template == "dag-goodbye"
+    assert hooks["exit"].template.startswith("dag-goodbye-")
     assert hooks["exit"].arguments.parameters[0].name == "name"
     assert hooks["exit"].arguments.parameters[0].value == "{{inputs.parameters.name}}"

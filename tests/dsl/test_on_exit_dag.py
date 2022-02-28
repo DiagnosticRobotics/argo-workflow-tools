@@ -28,10 +28,10 @@ def test_on_exit_dag():
         arguments={"name": "james"},
     )
     model = workflow.to_model()
-    assert model.spec.on_exit == "on-exit"
+    assert model.spec.on_exit.startswith("on-exit-")
     on_exit_template = model.spec.templates[3]
 
     assert on_exit_template.dag is not None, "on-exit dag does not exist"
     assert (
-        on_exit_template.dag.tasks[0].template == "say-goodbye"
+        on_exit_template.dag.tasks[0].template.startswith("say-goodbye-")
     ), "dag does not reference goodbye task"
