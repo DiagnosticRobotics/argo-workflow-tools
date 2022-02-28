@@ -85,7 +85,8 @@ def sanitize_name(name: str, snake_case=False) -> str:
 
 def generate_template_name_from_func(func: Callable, snake_case=False) -> str:
     sanitized = sanitize_name(func.__name__, snake_case)
-    return f'{sanitized}-{func.__hash__()}'
+    hash_value = func.__hash__() % 1_000_000  # Limit to 6 digits
+    return f'{sanitized}-{hash_value}'
 
 
 def convert_str(value: any) -> str:
