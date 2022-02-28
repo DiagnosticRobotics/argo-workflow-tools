@@ -219,20 +219,22 @@ def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
 def _build_exit_hook(exit_hook: Callable, embed_workflow_templates: bool) -> Dict[str, argo.LifecycleHook]:
     if exit_hook:
         ctx = copy_context()
-        dag_output = ctx.run(exit_hook)
+        ctx.run(exit_hook)
         dag_tasks = ctx.get(workflow_template_collector.dag_tasks, [])
         arguments = [
             _build_node_input(input_name, input_type)
             for input_name, input_type in dag_tasks[0].arguments.items()
         ]
         if isinstance(dag_tasks[0], DAGReference):
-            _build_dag_template(dag_tasks[0], embed_workflow_templates)
+            template = _build_dag_template(dag_tasks[0], embed_workflow_templates)
         elif isinstance(dag_tasks[0], TaskReference):
-            _build_task_template(dag_tasks[0])
+            template = _build_task_template(dag_tasks[0])
+        else:
+            return None
         arguments = get_arguments(arguments)
         return {
             "exit": argo.LifecycleHook(
-                template=dag_output.source_template, arguments=arguments
+                template=template.name, arguments=arguments
             )
         }
     return None
