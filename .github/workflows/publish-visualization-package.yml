@@ -1,0 +1,35 @@
+name: Publish visualization packge
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Install dependencies
+      run: |
+        cd argo_workflow_tools_visualization/
+        poetry install
+    - name: Build package
+      run: |
+        cd argo_workflow_tools_visualization/
+        poetry build -f wheel
+    - name: Publish package
+      env:
+        PYPI_USER: ${{ secrets.PYPI_USER }}
+        PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+
+      run: |
+        cd argo_workflow_tools_visualization/
+        poetry publish -u "$PYPI_USER" -p "$PYPI_TOKEN"
