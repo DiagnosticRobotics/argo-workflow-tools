@@ -1,6 +1,6 @@
 from typing import Union, List, Dict, Tuple, Callable
 import json
-
+import hashlib
 import shortuuid
 from pydantic import BaseModel
 
@@ -85,7 +85,9 @@ def sanitize_name(name: str, snake_case=False) -> str:
 
 def generate_template_name_from_func(func: Callable, snake_case=False) -> str:
     sanitized = sanitize_name(func.__name__, snake_case)
-    hash_value = func.__hash__() % 1_000_000  # Limit to 6 digits
+    module = func.__module__
+    name = func.__qualname__
+    hash_value = hashlib.sha1(str((module, name)).encode()).hexdigest()[:6]
     return f'{sanitized}-{hash_value}'
 
 

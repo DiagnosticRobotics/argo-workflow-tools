@@ -294,10 +294,11 @@ def _build_dag_task(
         )
         return task
     elif isinstance(dag_task, WorkflowTemplateReference):
+        template_name = generate_template_name_from_func(dag_task.func)
         task = argo.DagTask(
             name=dag_task.id,
             templateRef=argo.TemplateRef(
-                name=dag_task.workflow_template_name, template=dag_task.name
+                name=dag_task.workflow_template_name, template=template_name
             ),
             dependencies=list(dependencies),
             hooks=hook,
