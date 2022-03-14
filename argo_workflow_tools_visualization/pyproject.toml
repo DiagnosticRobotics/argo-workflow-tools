@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "argo-workflow-tools-visualization"
+version = "0.1.3"
+description = "Visualization tools for the argo-workflow-tools package"
+authors = ["Diagnostic Robotics"]
+license = "Apache 2.0"
+repository = "https://github.com/DiagnosticRobotics/argo-workflow-tools"
+
+[tool.poetry.dependencies]
+python = ">=3.7,<4.0"
+argo-workflow-tools = "^0.9.45"
+graphviz = "^0.19.1"
+pydot = "^1.4.2"
+networkx = "^2.6.3"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.2.5"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

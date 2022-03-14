@@ -1,6 +1,6 @@
-from typing import Union, List, Dict, Tuple
+from typing import Union, List, Dict, Tuple, Callable
 import json
-
+import hashlib
 import shortuuid
 from pydantic import BaseModel
 
@@ -25,13 +25,19 @@ def delete_none(_dict: dict) -> dict:
         return _dict
     return _dict
 
+def _parse_parameter(val: any) -> str:
+    if isinstance(val, BaseModel):
+        return val.json()
+    if isinstance(val, bool):
+        return json.dumps(val)
+    return val
 
 def _convert_params(
     args: Union[Dict[str, str], List[Union[argo.Arguments, argo.Parameter]]]
 ) -> Tuple[List[argo.Artifact], List[argo.Parameter]]:
     if isinstance(args, dict):
         parameters = [
-            argo.Parameter(name=sanitize_name(key, snake_case=True), value=value)
+            argo.Parameter(name=sanitize_name(key, snake_case=True), value=_parse_parameter(value))
             for key, value in args.items()
         ]
         artifacts = []
@@ -75,6 +81,14 @@ def sanitize_name(name: str, snake_case=False) -> str:
     if snake_case:
         return name
     return name.replace("_", "-")
+
+
+def generate_template_name_from_func(func: Callable, snake_case=False) -> str:
+    sanitized = sanitize_name(func.__name__, snake_case)
+    module = func.__module__
+    name = func.__qualname__
+    hash_value = hashlib.sha1(str((module, name)).encode()).hexdigest()[:6]
+    return f'{sanitized}-{hash_value}'
 
 
 def convert_str(value: any) -> str:

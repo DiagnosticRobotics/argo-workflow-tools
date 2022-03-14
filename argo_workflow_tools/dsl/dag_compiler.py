@@ -26,7 +26,7 @@ from argo_workflow_tools.dsl.utils.utils import (
     get_arguments,
     get_inputs,
     get_outputs,
-    sanitize_name,
+    sanitize_name, generate_template_name_from_func,
 )
 from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
 
@@ -172,8 +172,7 @@ def _fill_dag_metadata(task_template: argo.Template, properties: DAGNodeProperti
 
 def _generate_task_name_from_node_uid(nodes: List[NodeReference]) -> Dict[str, str]:
     node_names_by_id = {}
-    # groupby only groups consecutive elements therefore we need to sort them by name
-    # first
+    # groupby only groups consecutive elements therefore we need to sort them by name first
     sorted_nodes = sorted(nodes, key=lambda node_reference: node_reference.name)
     for name, group in groupby(
         sorted_nodes, key=lambda node_reference: node_reference.name
@@ -217,30 +216,33 @@ def build_condition(conditions: List[Union[BinaryOp, UnaryOp]]):
     return "&&".join(condition_expr)
 
 
-def _build_exit_hook(exit_hook: Callable) -> Dict[str, argo.LifecycleHook]:
+def _build_exit_hook(exit_hook: Callable, embed_workflow_templates: bool) -> Dict[str, argo.LifecycleHook]:
     if exit_hook:
         ctx = copy_context()
-        dag_output = ctx.run(exit_hook)
+        ctx.run(exit_hook)
         dag_tasks = ctx.get(workflow_template_collector.dag_tasks, [])
         arguments = [
             _build_node_input(input_name, input_type)
             for input_name, input_type in dag_tasks[0].arguments.items()
         ]
         if isinstance(dag_tasks[0], DAGReference):
-            _build_dag_template(dag_tasks[0])
+            template = _build_dag_template(dag_tasks[0], embed_workflow_templates)
         elif isinstance(dag_tasks[0], TaskReference):
-            _build_task_template(dag_tasks[0])
+            template = _build_task_template(dag_tasks[0])
+        else:
+            return None
         arguments = get_arguments(arguments)
         return {
             "exit": argo.LifecycleHook(
-                template=dag_output.source_template, arguments=arguments
+                template=template.name, arguments=arguments
             )
         }
     return None
 
 
 def _build_dag_task(
-    dag_task: NodeReference, unique_node_names_map: Dict[str, str]
+    dag_task: NodeReference, unique_node_names_map: Dict[str, str],
+    embed_workflow_templates: bool
 ) -> argo.DagTask:
     potential_deps = list(dag_task.arguments.values())
     potential_deps.extend(list() if dag_task.wait_for is None else dag_task.wait_for)
@@ -260,11 +262,12 @@ def _build_dag_task(
         for input_name, input_type in dag_task.arguments.items()
     ]
 
-    hook = _build_exit_hook(dag_task.exit)
+    hook = _build_exit_hook(dag_task.exit, embed_workflow_templates)
     continue_on = argo.ContinueOn(failed=dag_task.continue_on_fail) if dag_task.continue_on_fail else None
 
-    if isinstance(dag_task, DAGReference):
-        dag = _build_dag_template(dag_task.node)
+    if isinstance(dag_task, DAGReference) or \
+            (isinstance(dag_task, WorkflowTemplateReference) and embed_workflow_templates):
+        dag = _build_dag_template(dag_task.node, embed_workflow_templates)
         task = argo.DagTask(
             name=dag_task.id,
             template=dag.name,
@@ -291,10 +294,11 @@ def _build_dag_task(
         )
         return task
     elif isinstance(dag_task, WorkflowTemplateReference):
+        template_name = generate_template_name_from_func(dag_task.func)
         task = argo.DagTask(
             name=dag_task.id,
             templateRef=argo.TemplateRef(
-                name=dag_task.workflow_template_name, template=dag_task.name
+                name=dag_task.workflow_template_name, template=template_name
             ),
             dependencies=list(dependencies),
             hooks=hook,
@@ -412,7 +416,7 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
     task_outputs = get_outputs(task_outputs)
 
     task_template = argo.Template(
-        name=sanitize_name(task_node.func.__name__),
+        name=generate_template_name_from_func(task_node.func),
         inputs=get_inputs(list(task_inputs.values())),
         script=argo.ScriptTemplate(
             image=task_node.properties.image, source=source, command=["python"]
@@ -427,12 +431,13 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
     return task_template
 
 
-def _build_dag_template(node: DAGNode) -> argo.Template:
+def _build_dag_template(node: DAGNode, embed_workflow_templates: bool) -> argo.Template:
     """
     Builds an Argo DAG Template out of a DAGNode
     Parameters
     ----------
     node : DAGNode to parse into a DAG Template
+    embed_workflow_templates : boolean that determines whether to compile workflow template inline or use templateRefs
 
     Returns
     -------
@@ -464,11 +469,11 @@ def _build_dag_template(node: DAGNode) -> argo.Template:
     unique_node_names_map = _generate_task_name_from_node_uid(dag_tasks)
     dag_outputs = _build_dag_outputs(dag_output)
 
-    tasks = [_build_dag_task(dag_task, unique_node_names_map) for dag_task in dag_tasks]
+    tasks = [_build_dag_task(dag_task, unique_node_names_map, embed_workflow_templates) for dag_task in dag_tasks]
 
     dag_template = argo.Template(
         dag=argo.DagTemplate(tasks=list(tasks)),
-        name=sanitize_name(node.func.__name__),
+        name=generate_template_name_from_func(node.func),
         outputs=get_outputs(dag_outputs),
         inputs=get_inputs(dag_inputs),
     )
@@ -479,13 +484,14 @@ def _build_dag_template(node: DAGNode) -> argo.Template:
     return dag_template
 
 
-def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None) -> argo.WorkflowSpec:
+def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None, embed_workflow_templates: bool = False) -> argo.WorkflowSpec:
     """
     compiles a DAG annotated function into a WorkflowSpec arg model
     Parameters
     ----------
     entrypoint : DAG entrypoint
     on_exit : on_exit DAG entrypoint
+    embed_workflow_templates : boolean that determines whether to compile workflow template inline or use templateRefs
 
     Returns
     -------
@@ -498,10 +504,10 @@ def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None) -> argo.WorkflowSp
             raise ValueError(
                 f"{entrypoint.__name__} is not decorated with DAG or Task decorator"
             )
-        result = _build_dag_template(entrypoint)
+        result = _build_dag_template(entrypoint, embed_workflow_templates)
 
         if on_exit:
-            on_exit_result = _build_dag_template(on_exit).name
+            on_exit_result = _build_dag_template(on_exit, embed_workflow_templates).name
         else:
             on_exit_result = None
 
