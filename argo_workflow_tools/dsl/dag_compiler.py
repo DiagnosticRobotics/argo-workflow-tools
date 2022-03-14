@@ -32,7 +32,7 @@ from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
 
 
 def _create_task_script(
-    func_obj: TaskReference, parameters: Dict[str, argo.Parameter]
+        func_obj: TaskReference, parameters: Dict[str, argo.Parameter]
 ) -> str:
     """
     generates a runnable script out of a task function, adding input and output boilerplate
@@ -58,17 +58,17 @@ def _create_task_script(
         )
         builder_imports = builder_imports.union(json_parameter.imports())
         inputs += (
-            json_parameter.variable_from_input(parameters[name].name, name, func_obj)
-            + os.linesep
+                json_parameter.variable_from_input(parameters[name].name, name, func_obj)
+                + os.linesep
         )
 
     for name, argument in func_obj.outputs.items():
         builder_imports = builder_imports.union(argument.parameter_builder.imports())
         outputs += (
-            argument.parameter_builder.variable_to_output(
-                argument.name, name, func_obj.func
-            )
-            + os.linesep
+                argument.parameter_builder.variable_to_output(
+                    argument.name, name, func_obj.func
+                )
+                + os.linesep
         )
     if outputs == "":
         output_builder = func_obj.properties.outputs.get(
@@ -85,12 +85,12 @@ def _create_task_script(
     post_func_hook_code = _extract_source_without_decorators(post_func_hook)
 
     script = _build_full_source_script(func_obj, func_code, builder_imports, inputs, outputs, pre_func_hook,
-                                       pre_func_hook_code,  post_func_hook, post_func_hook_code)
+                                       pre_func_hook_code, post_func_hook, post_func_hook_code)
     return script
 
 
 def _build_full_source_script(func_obj, func_code, builder_imports, inputs, outputs,
-                              pre_func_hook,  pre_func_hook_code,  post_func_hook, post_func_hook_code):
+                              pre_func_hook, pre_func_hook_code, post_func_hook, post_func_hook_code):
     indentation = ' ' * 4
     func_call = f"result={func_obj.func.__name__}({str.join(',', inspect.signature(func_obj.func).parameters.keys())})"
     func_and_hooks_call = (
@@ -144,6 +144,7 @@ def _fill_task_metadata(task_template: argo.Template, properties: TaskNodeProper
     task_template.script.env_from = properties.env_from
     task_template.script.env = properties.env
     task_template.script.working_dir = properties.working_dir
+    task_template.outputs.artifacts = properties.artifacts
     return task_template
 
 
@@ -175,7 +176,7 @@ def _generate_task_name_from_node_uid(nodes: List[NodeReference]) -> Dict[str, s
     # groupby only groups consecutive elements therefore we need to sort them by name first
     sorted_nodes = sorted(nodes, key=lambda node_reference: node_reference.name)
     for name, group in groupby(
-        sorted_nodes, key=lambda node_reference: node_reference.name
+            sorted_nodes, key=lambda node_reference: node_reference.name
     ):
         duplicate_nodes = list(group)
 
@@ -188,7 +189,7 @@ def _generate_task_name_from_node_uid(nodes: List[NodeReference]) -> Dict[str, s
 
 
 def _build_with(
-    params: List[InputDefinition], unique_node_names_map: Dict[str, str]
+        params: List[InputDefinition], unique_node_names_map: Dict[str, str]
 ) -> Optional[str]:
     """
     builds "with" param for loop DAGs by analyzing the inputs and looking iterable inputs.
@@ -241,8 +242,8 @@ def _build_exit_hook(exit_hook: Callable, embed_workflow_templates: bool) -> Dic
 
 
 def _build_dag_task(
-    dag_task: NodeReference, unique_node_names_map: Dict[str, str],
-    embed_workflow_templates: bool
+        dag_task: NodeReference, unique_node_names_map: Dict[str, str],
+        embed_workflow_templates: bool
 ) -> argo.DagTask:
     potential_deps = list(dag_task.arguments.values())
     potential_deps.extend(list() if dag_task.wait_for is None else dag_task.wait_for)
@@ -250,9 +251,9 @@ def _build_dag_task(
         [
             input_dep.source_node_id
             for input_dep in filter(
-                lambda x: isinstance(x, InputDefinition) and x.is_node_output,
-                potential_deps,
-            )
+            lambda x: isinstance(x, InputDefinition) and x.is_node_output,
+            potential_deps,
+        )
         ]
     )
 
@@ -336,11 +337,11 @@ def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
 
 
 def _build_dag_outputs(
-    dag_output: Union[
-        None,
-        InputDefinition,
-        Mapping[str, InputDefinition],
-    ]
+        dag_output: Union[
+            None,
+            InputDefinition,
+            Mapping[str, InputDefinition],
+        ]
 ) -> List[Union[argo.Parameter, argo.Artifact]]:
     """
     Builds DAG output parameter out of DAG definition
@@ -348,8 +349,8 @@ def _build_dag_outputs(
     outputs: Mapping[str, InputDefinition] = {}
 
     if (
-        isinstance(dag_output, InputDefinition)
-        and dag_output.source_type == SourceType.NODE_OUTPUT
+            isinstance(dag_output, InputDefinition)
+            and dag_output.source_type == SourceType.NODE_OUTPUT
     ):
         outputs = {"result": dag_output}
     elif isinstance(dag_output, Mapping):
@@ -387,7 +388,7 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
             name=sanitize_name(param_name, snake_case=True),
             default=None
             if isinstance(param_definition.default, type)
-            and param_definition.default.__name__ == "_empty"
+               and param_definition.default.__name__ == "_empty"
             else param_definition.default,
         )
         for param_name, param_definition in inspect.signature(
@@ -450,7 +451,7 @@ def _build_dag_template(node: DAGNode, embed_workflow_templates: bool) -> argo.T
             name=sanitize_name(param_name, snake_case=True),
             default=None
             if isinstance(param_definition.default, type)
-            and param_definition.default.__name__ == "_empty"
+               and param_definition.default.__name__ == "_empty"
             else param_definition.default,
         )
         for param_name, param_definition in inspect.signature(
@@ -484,7 +485,8 @@ def _build_dag_template(node: DAGNode, embed_workflow_templates: bool) -> argo.T
     return dag_template
 
 
-def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None, embed_workflow_templates: bool = False) -> argo.WorkflowSpec:
+def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None,
+                embed_workflow_templates: bool = False) -> argo.WorkflowSpec:
     """
     compiles a DAG annotated function into a WorkflowSpec arg model
     Parameters
