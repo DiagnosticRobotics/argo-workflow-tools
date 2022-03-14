@@ -27,3 +27,4 @@ class TaskNodeProperties:
     env_from: List[k8s.EnvFromSource] = None
     image_pull_policy: str = None
     service_account_name: str = None
+    artifacts: List[argo.Artifact] = None

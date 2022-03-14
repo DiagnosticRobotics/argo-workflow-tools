@@ -112,6 +112,7 @@ def Task(
     image_pull_policy: str = None,
     pre_hook: Optional[Callable[[], None]] = None,
     post_hook: Optional[Callable[[], None]] = None,
+    artifacts: List[argo.Artifact] = None,
 ) -> Callable[[Callable], Node]:
     if inputs is None:
         inputs = {}
@@ -139,6 +140,7 @@ def Task(
                 image_pull_policy=image_pull_policy,
                 inputs=inputs,
                 outputs=outputs,
+                artifacts = artifacts,
             ),
             pre_hook=pre_hook,
             post_hook=post_hook,
