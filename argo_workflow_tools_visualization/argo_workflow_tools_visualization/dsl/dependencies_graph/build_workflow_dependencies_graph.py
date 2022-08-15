@@ -2,7 +2,7 @@ from typing import List, Optional, Set
 from uuid import uuid4
 
 import networkx as nx
-from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
+from argo_workflow_tools import sdk as argo
 
 from argo_workflow_tools.dsl.workflow import WorkflowTemplate
 from argo_workflow_tools.dsl import compile_workflow

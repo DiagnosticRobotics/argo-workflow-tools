@@ -1,11 +1,5 @@
-from typing import List
-
-import pytest
-import yaml
-
 from argo_workflow_tools import dsl, Workflow
-
-from argo_workflow_tools.models.io.argoproj.workflow.v1alpha1 import Artifact
+from argo_workflow_tools.sdk import Artifact
 
 
 @dsl.Task(image="python:3.10", artifacts=[Artifact(name="hello_world", path="/tmp/hello_world.txt")])

@@ -28,7 +28,7 @@ from argo_workflow_tools.dsl.utils.utils import (
     get_outputs,
     sanitize_name, generate_template_name_from_func,
 )
-from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
+from argo_workflow_tools import sdk as argo
 
 
 def _create_task_script(
@@ -128,23 +128,41 @@ def _dummy_post_func_hook():
 
 
 def _fill_task_metadata(task_template: argo.Template, properties: TaskNodeProperties):
-    task_template.retry_strategy = properties.retry_strategy
-    task_template.parallelism = properties.parallelism
-    task_template.fail_fast = properties.fail_fast
-    task_template.active_deadline_seconds = properties.active_deadline_seconds
-    task_template.affinity = properties.affinity
-    task_template.tolerations = properties.tolerations
-    task_template.node_selector = properties.node_selector
-    task_template.metadata = argo.Metadata(
-        labels=properties.labels, annotations=properties.annotations
-    )
-    task_template.service_account_name = properties.service_account_name
-    task_template.script.resources = properties.resources
-    task_template.script.image_pull_policy = properties.image_pull_policy
-    task_template.script.env_from = properties.env_from
-    task_template.script.env = properties.env
-    task_template.script.working_dir = properties.working_dir
-    task_template.outputs.artifacts = properties.artifacts
+
+    if properties.retry_strategy is not None:
+        task_template.retry_strategy = properties.retry_strategy
+    if properties.parallelism is not None:
+        task_template.parallelism = properties.parallelism
+    if properties.fail_fast is not None:
+        task_template.fail_fast = properties.fail_fast
+    if properties.active_deadline_seconds is not None:
+        task_template.active_deadline_seconds = properties.active_deadline_seconds
+    if properties.affinity is not None:
+        task_template.affinity = properties.affinity
+    if properties.tolerations is not None:
+        task_template.tolerations = properties.tolerations
+    if properties.node_selector is not None:
+        task_template.node_selector = properties.node_selector
+
+    if properties.labels is not None or properties.annotations is not None:
+        task_template.metadata = argo.Metadata(
+            labels=properties.labels, annotations=properties.annotations
+        )
+
+    if properties.service_account_name is not None:
+        task_template.service_account_name = properties.service_account_name
+    if properties.resources is not None:
+        task_template.script.resources = properties.resources
+    if properties.image_pull_policy is not None:
+        task_template.script.image_pull_policy = properties.image_pull_policy
+    if properties.env_from is not None:
+        task_template.script.env_from = properties.env_from
+    if properties.env is not None:
+        task_template.script.env = properties.env
+    if properties.working_dir is not None:
+        task_template.script.working_dir = properties.working_dir
+    if properties.artifacts is not None:
+        task_template.outputs.artifacts = properties.artifacts
     return task_template
 
 
@@ -160,14 +178,19 @@ def _fill_dag_metadata(task_template: argo.Template, properties: DAGNodeProperti
     -------
     filled task_template
     """
-    task_template.retry_strategy = properties.retry_strategy
-    task_template.parallelism = properties.parallelism
-    task_template.fail_fast = properties.fail_fast
-    task_template.active_deadline_seconds = properties.active_deadline_seconds
-    task_template.metadata = argo.Metadata(
-        labels=properties.labels, annotations=properties.annotations
-    )
-    task_template.dag.fail_fast = properties.fail_fast
+    if properties.retry_strategy is not None:
+        task_template.retry_strategy = properties.retry_strategy
+    if properties.parallelism is not None:
+        task_template.parallelism = properties.parallelism
+    if properties.fail_fast is not None:
+        task_template.fail_fast = properties.fail_fast
+        task_template.dag.fail_fast = properties.fail_fast
+    if properties.active_deadline_seconds is not None:
+        task_template.active_deadline_seconds = properties.active_deadline_seconds
+    if properties.labels is not None or properties.annotations is not None:
+        task_template.metadata = argo.Metadata(
+            labels=properties.labels, annotations=properties.annotations
+        )
     return task_template
 
 
@@ -231,20 +254,20 @@ def _build_exit_hook(exit_hook: Callable, embed_workflow_templates: bool) -> Dic
         elif isinstance(dag_tasks[0], TaskReference):
             template = _build_task_template(dag_tasks[0])
         else:
-            return None
+            return {}
         arguments = get_arguments(arguments)
         return {
             "exit": argo.LifecycleHook(
                 template=template.name, arguments=arguments
             )
         }
-    return None
+    return {}
 
 
 def _build_dag_task(
         dag_task: NodeReference, unique_node_names_map: Dict[str, str],
         embed_workflow_templates: bool
-) -> argo.DagTask:
+) -> argo.DAGTask:
     potential_deps = list(dag_task.arguments.values())
     potential_deps.extend(list() if dag_task.wait_for is None else dag_task.wait_for)
     dependencies = set(
@@ -269,7 +292,7 @@ def _build_dag_task(
     if isinstance(dag_task, DAGReference) or \
             (isinstance(dag_task, WorkflowTemplateReference) and embed_workflow_templates):
         dag = _build_dag_template(dag_task.node, embed_workflow_templates)
-        task = argo.DagTask(
+        task = argo.DAGTask(
             name=dag_task.id,
             template=dag.name,
             arguments=get_arguments(list(arguments)),
@@ -283,7 +306,7 @@ def _build_dag_task(
     elif isinstance(dag_task, TaskReference):
         task_template = _build_task_template(dag_task)
 
-        task = argo.DagTask(
+        task = argo.DAGTask(
             name=dag_task.id,
             template=task_template.name,
             dependencies=list(dependencies),
@@ -296,7 +319,7 @@ def _build_dag_task(
         return task
     elif isinstance(dag_task, WorkflowTemplateReference):
         template_name = generate_template_name_from_func(dag_task.func)
-        task = argo.DagTask(
+        task = argo.DAGTask(
             name=dag_task.id,
             templateRef=argo.TemplateRef(
                 name=dag_task.workflow_template_name, template=template_name
@@ -323,17 +346,17 @@ def _build_input_parameter(parameter: InputDefinition) -> argo.Parameter:
     """
     Builds Argo Parameter out of InputDefinition
     """
+    argo_parameter_kwargs = {}
     if parameter.source_type == SourceType.PARAMETER:
-        argo_parameter = argo.Parameter(
-            name=sanitize_name(parameter.name, snake_case=True),
-            default=parameter.default,
-        )
-        return argo_parameter
+        argo_parameter_kwargs.update({'name': sanitize_name(parameter.name, snake_case=True)})
     else:
-        argo_parameter = argo.Parameter(
-            name=parameter.name, value=parameter.path(), default=parameter.default
-        )
-        return argo_parameter
+        argo_parameter_kwargs.update({'name': parameter.name, 'value': parameter.value})
+
+    if parameter.default is not None:
+        argo_parameter_kwargs['default'] = parameter.default
+
+    argo_parameter = argo.Parameter(**argo_parameter_kwargs)
+    return argo_parameter
 
 
 def _build_dag_outputs(
@@ -364,7 +387,7 @@ def _build_dag_outputs(
     return [
         argo.Parameter(
             name=output_name,
-            valueFrom=argo.ValueFrom(parameter=output.path()),
+            value_from=argo.ValueFrom(parameter=output.path()),
         )
         for output_name, output in outputs.items()
     ]
@@ -405,7 +428,7 @@ def _build_task_template(task_node: TaskReference) -> argo.Template:
     task_outputs = [
         argo.Parameter(
             name=output_definition.name,
-            valueFrom=argo.ValueFrom(
+            value_from=argo.ValueFrom(
                 path=output_definition.parameter_builder.artifact_path(
                     output_definition.name
                 ),
@@ -473,7 +496,7 @@ def _build_dag_template(node: DAGNode, embed_workflow_templates: bool) -> argo.T
     tasks = [_build_dag_task(dag_task, unique_node_names_map, embed_workflow_templates) for dag_task in dag_tasks]
 
     dag_template = argo.Template(
-        dag=argo.DagTemplate(tasks=list(tasks)),
+        dag=argo.DAGTemplate(tasks=list(tasks)),
         name=generate_template_name_from_func(node.func),
         outputs=get_outputs(dag_outputs),
         inputs=get_inputs(dag_inputs),

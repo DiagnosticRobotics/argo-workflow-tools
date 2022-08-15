@@ -2,7 +2,7 @@ from contextvars import ContextVar
 from typing import List
 
 from argo_workflow_tools.dsl.dag_task import NodeReference
-from argo_workflow_tools.models.io.argoproj.workflow.v1alpha1 import Template
+from argo_workflow_tools.sdk import Template
 
 dag_tasks: ContextVar[List[NodeReference]] = ContextVar("dag_tasks")
 

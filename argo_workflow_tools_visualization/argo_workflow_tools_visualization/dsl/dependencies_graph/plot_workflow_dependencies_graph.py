@@ -5,7 +5,7 @@ from graphviz import Digraph
 import pydot
 
 from argo_workflow_tools.dsl.node import WorkflowTemplateNode
-from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
+from argo_workflow_tools import sdk as argo
 from .build_workflow_dependencies_graph import build_workflow_dependencies_graph
 
 

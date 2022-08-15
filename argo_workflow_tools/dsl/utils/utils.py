@@ -4,7 +4,7 @@ import hashlib
 import shortuuid
 from pydantic import BaseModel
 
-from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
+from argo_workflow_tools import sdk as argo
 
 shortuuid = shortuuid.ShortUUID(alphabet="abcdefghijklmnopqrstuvwxyz1234567890")
 
@@ -25,12 +25,14 @@ def delete_none(_dict: dict) -> dict:
         return _dict
     return _dict
 
+
 def _parse_parameter(val: any) -> str:
     if isinstance(val, BaseModel):
         return val.json()
     if isinstance(val, bool):
         return json.dumps(val)
     return val
+
 
 def _convert_params(
     args: Union[Dict[str, str], List[Union[argo.Arguments, argo.Parameter]]]

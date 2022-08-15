@@ -8,9 +8,7 @@ from argo_workflow_tools.dsl.utils.utils import (
     get_arguments,
     sanitize_name,
 )
-from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
-from argo_workflow_tools.models.io.k8s.apimachinery.pkg.apis.meta import v1 as k8s_v1
-
+from argo_workflow_tools import sdk as argo
 
 class WorkflowTemplate:
     def __init__(
@@ -56,18 +54,18 @@ class WorkflowTemplate:
         return argo.WorkflowTemplate(
             apiVersion="argoproj.io/v1alpha1",
             kind="WorkflowTemplate",
-            metadata=k8s_v1.ObjectMeta(
+            metadata=argo.ObjectMeta(
                 name=self.name,
                 namespace=self.namespace,
                 labels=self.labels,
                 annotations=self.annotations,
             ),
-            spec=argo.WorkflowTemplateSpec(
+            spec=argo.WorkflowSpec(
                 templates=spec.templates,
                 entrypoint=spec.entrypoint,
                 onExit=spec.on_exit,
                 arguments=spec.arguments,
-                workflowMetadata=k8s_v1.ObjectMeta(labels=self.workflow_labels, annotations=self.workflow_annotations)
+                workflowMetadata=argo.ObjectMeta(labels=self.workflow_labels, annotations=self.workflow_annotations)
             )
         )
 
@@ -137,13 +135,13 @@ class CronWorkflow:
             schedule=self.schedule,
             concurrencyPolicy=self.concurrency_policy,
             suspend=self.suspend,
-            workflowMetadata=k8s_v1.ObjectMeta(labels=self.workflow_labels, annotations=self.workflow_annotations)
+            workflowMetadata=argo.ObjectMeta(labels=self.workflow_labels, annotations=self.workflow_annotations)
         )
 
         return argo.CronWorkflow(
             apiVersion="argoproj.io/v1alpha1",
             kind="CronWorkflow",
-            metadata=k8s_v1.ObjectMeta(
+            metadata=argo.ObjectMeta(
                 name=self.name,
                 namespace=self.namespace,
                 labels=self.labels,
@@ -199,7 +197,7 @@ class Workflow:
         workflow = argo.Workflow(
             apiVersion="argoproj.io/v1alpha1",
             kind="Workflow",
-            metadata=k8s_v1.ObjectMeta(
+            metadata=argo.ObjectMeta(
                 name=self.name,
                 generateName=self.generated_name,
                 namespace=self.namespace,

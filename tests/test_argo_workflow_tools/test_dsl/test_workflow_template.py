@@ -1,5 +1,5 @@
-import argo_workflow_tools.models.io.argoproj.workflow.v1alpha1 as argo
 from argo_workflow_tools import dsl, WorkflowTemplate
+from argo_workflow_tools.sdk import Parameter
 
 
 @dsl.Task(image="python:3.10")
@@ -37,7 +37,7 @@ def test_workflow_template_arguments():
     workflow = WorkflowTemplate(
         name="hello-world",
         entrypoint=command_hello,
-        arguments=[argo.Parameter(name="name", value="Brian", enum=["Brian", "Joe"])],
+        arguments=[Parameter(name="name", value="Brian", enum=["Brian", "Joe"])],
     )
     model = workflow.to_model()
     assert model.spec.arguments.parameters[0].enum == ["Brian", "Joe"]

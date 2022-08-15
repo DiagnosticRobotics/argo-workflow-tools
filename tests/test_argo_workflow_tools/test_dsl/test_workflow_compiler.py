@@ -1,9 +1,5 @@
-import pytest
-import yaml
-
-from argo_workflow_tools import dsl, Workflow
+from argo_workflow_tools import dsl
 from argo_workflow_tools.dsl import compile_workflow
-from argo_workflow_tools.models.io.argoproj.workflow.v1alpha1 import Artifact
 
 
 def pre_hook1():

@@ -1,7 +1,6 @@
 from typing import Callable, Dict, List, Optional
 
-import argo_workflow_tools.models.io.argoproj.workflow.v1alpha1 as argo
-import argo_workflow_tools.models.io.k8s.api.core.v1 as k8s
+from argo_workflow_tools import sdk as argo
 from argo_workflow_tools.dsl.node import DAGNode, Node, TaskNode, WorkflowTemplateNode
 from argo_workflow_tools.dsl.node_properties.dag_node_properties import (
     DAGNodeProperties,
@@ -94,7 +93,7 @@ def WorkflowTemplate(
 
 def Task(
     image: str,
-    resources: k8s.ResourceRequirements = None,
+    resources: argo.ResourceRequirements = None,
     working_dir: str = None,
     inputs: Dict[str, ParameterBuilder] = None,
     outputs: Dict[str, ParameterBuilder] = None,
@@ -105,10 +104,10 @@ def Task(
     node_selector: Dict[str, str] = None,
     parallelism: int = None,
     retry_strategy: argo.RetryStrategy = None,
-    tolerations: List[k8s.Toleration] = None,
-    affinity: List[k8s.Affinity] = None,
-    env: List[k8s.EnvVar] = None,
-    env_from: List[k8s.EnvFromSource] = None,
+    tolerations: List[argo.Toleration] = None,
+    affinity: List[argo.Affinity] = None,
+    env: List[argo.EnvVar] = None,
+    env_from: List[argo.EnvFromSource] = None,
     image_pull_policy: str = None,
     pre_hook: Optional[Callable[[], None]] = None,
     post_hook: Optional[Callable[[], None]] = None,
@@ -140,7 +139,7 @@ def Task(
                 image_pull_policy=image_pull_policy,
                 inputs=inputs,
                 outputs=outputs,
-                artifacts = artifacts,
+                artifacts=artifacts,
             ),
             pre_hook=pre_hook,
             post_hook=post_hook,
