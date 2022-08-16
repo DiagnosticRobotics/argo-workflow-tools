@@ -11,7 +11,7 @@ from argo_workflow_tools.argo_http_client import (
     SubmitOptions,
 )
 from argo_workflow_tools.argo_options import ArgoOptions
-import argo_workflow_tools.dsl.building_mode_context as building_mode_context
+from argo_workflow_tools.dsl import building_mode_context as building_mode_context
 from argo_workflow_tools.exceptions.workflow_not_found_exception import (
     WorkflowNotFoundException,
 )
