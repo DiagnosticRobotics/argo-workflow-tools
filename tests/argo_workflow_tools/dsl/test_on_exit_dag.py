@@ -1,4 +1,4 @@
-from argo_workflow_tools import dsl, Workflow, WorkflowTemplate
+from argo_workflow_tools import dsl, WorkflowTemplate
 
 
 def test_on_exit_dag():
@@ -28,7 +28,10 @@ def test_on_exit_dag():
         arguments={"name": "james"},
     )
     model = workflow.to_model()
-    assert model.spec.on_exit.startswith("on-exit-")
+    on_exit_hook = model.spec.hooks['exit']
+    assert on_exit_hook.template.startswith("on-exit-")
+    assert on_exit_hook.arguments.parameters[0].name == 'name'
+    assert on_exit_hook.arguments.parameters[0].value == 'james'
     on_exit_template = model.spec.templates[3]
 
     assert on_exit_template.dag is not None, "on-exit dag does not exist"
