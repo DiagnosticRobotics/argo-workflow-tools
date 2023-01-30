@@ -18,6 +18,7 @@ from argo_workflow_tools.exceptions.workflow_not_found_exception import (
 from argo_workflow_tools.workflow_result import WorkflowResult
 from argo_workflow_tools.workflow_status import WorkflowStatus
 from argo_workflow_tools.workflow_status_checker import WorkflowStatusChecker
+from argo_workflow_tools.workflow_type import WorkflowType
 
 
 def _log_workflow_web_page_link(
@@ -52,6 +53,8 @@ class ArgoClient:
             annotations={},
             labels={},
             wait: bool = False,
+            resource_kind: WorkflowType = WorkflowType.WORKFLOW_TEMPLATE,
+            entrypoint: str = None,
     ) -> WorkflowResult:
         """[summary]
 
@@ -62,6 +65,7 @@ class ArgoClient:
             annotations (dict, optional): workflow annotations. Defaults to {}.
             labels (dict, optional): workflow labels. Defaults to {}.
             wait (bool, optional): block program and wait for workflow to finish. Defaults to False.
+            resource_kind (str, optional): resource kind to submit. Defaults to "WorkflowTemplate".
 
         Returns:
             WorkflowResult: workflow status reference
@@ -69,6 +73,9 @@ class ArgoClient:
 
         if namespace is None:
             namespace = self._options.namespace
+        choices =  WorkflowType.choices()
+        if resource_kind.value not in choices:
+            raise ValueError(f"resource_kind must be one of {choices}")
 
         parameters = [f"{key}={_parse_parameter(val)}" for key, val in params.items()]
         annotations = [f"{key}={val}" for key, val in annotations.items()]
@@ -78,10 +85,12 @@ class ArgoClient:
 
         body = ArgoSubmitRequestBody(
             namespace=namespace,
-            resourceKind="WorkflowTemplate",
+            resourceKind=resource_kind.value,
             resourceName=template_name,
             submitOptions=SubmitOptions(
-                parameters=parameters, labels=sep.join(labels), annotations=sep.join(annotations)
+                parameters=parameters, labels=sep.join(labels), 
+                annotations=sep.join(annotations),
+                entrypoint=entrypoint,
             ),
         )
         return self._submit_workflow(namespace, body, wait)
