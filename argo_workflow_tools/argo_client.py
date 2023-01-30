@@ -73,7 +73,8 @@ class ArgoClient:
 
         if namespace is None:
             namespace = self._options.namespace
-        if resource_kind.value not in (choices := WorkflowType.choices()):
+        choices =  WorkflowType.choices()
+        if resource_kind.value not in choices:
             raise ValueError(f"resource_kind must be one of {choices}")
 
         parameters = [f"{key}={_parse_parameter(val)}" for key, val in params.items()]
