@@ -54,6 +54,7 @@ class ArgoClient:
             labels={},
             wait: bool = False,
             resource_kind: WorkflowType = WorkflowType.WORKFLOW_TEMPLATE,
+            entrypoint: str = None,
     ) -> WorkflowResult:
         """[summary]
 
@@ -86,7 +87,9 @@ class ArgoClient:
             resourceKind=resource_kind.value,
             resourceName=template_name,
             submitOptions=SubmitOptions(
-                parameters=parameters, labels=sep.join(labels), annotations=sep.join(annotations)
+                parameters=parameters, labels=sep.join(labels), 
+                annotations=sep.join(annotations),
+                entrypoint=entrypoint,
             ),
         )
         return self._submit_workflow(namespace, body, wait)
