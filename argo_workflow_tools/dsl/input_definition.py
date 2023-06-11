@@ -34,6 +34,7 @@ class InputDefinition:
         key_name: str = None,
         value: str = None,
         default: any = None,
+        is_expression: bool = False,
     ):
         self.source_type = source_type
         self.name = name
@@ -44,6 +45,7 @@ class InputDefinition:
         self.key_name = key_name
         self.value = convert_str(value)
         self.default = convert_str(default)
+        self.is_expression = is_expression
 
     @property
     def is_node_output(self):

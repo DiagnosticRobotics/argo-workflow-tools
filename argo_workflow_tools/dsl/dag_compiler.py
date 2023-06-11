@@ -364,7 +364,7 @@ def _build_dag_outputs(
     return [
         argo.Parameter(
             name=output_name,
-            valueFrom=argo.ValueFrom(parameter=output.path()),
+            valueFrom=argo.ValueFrom(expression=output.path()) if output.is_expression else argo.ValueFrom(parameter=output.path())
         )
         for output_name, output in outputs.items()
     ]
