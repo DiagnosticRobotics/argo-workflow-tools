@@ -16,6 +16,19 @@ def test_conditional_result_tasks_dag():
         print(message)
         return message
 
+
+
+    @dsl.Task(image="python:3.10")
+    def say_yada(name: str)->str:
+        message = f"blala {name}"
+        print(message)
+        return message
+
+    @dsl.DAG()
+    def do_yada(name: str)->str:
+        return say_yada(name)
+
+
     @dsl.Task(image="python:3.10")
     def say_blabla(name: str)->str:
         message = f"blala {name}"
@@ -30,17 +43,19 @@ def test_conditional_result_tasks_dag():
             goodbye = say_goodbye(name)
         with Condition().equals(command, "blabla"):
             blabla = say_blabla(name)
-        return merge_conditional_results(hello, goodbye, blabla)
+        with Condition().equals(command, "yada"):
+            yada = do_yada(name)
+        return merge_conditional_results(hello, goodbye, blabla,yada)
 
     workflow = Workflow(
         generated_name="hello-world",
-        namespace="patient2rank-master",
         entrypoint=command_hello,
         arguments={"name": "james", "command": "hello"},
     )
     model = workflow.to_model()
+    print(workflow.to_yaml())
 
-    dag_template = model.spec.templates[3]
+    dag_template = model.spec.templates[5]
     assert dag_template.dag is not None, "dag does not exist"
     assert (
             dag_template.dag.tasks[0].when == " {{inputs.parameters.command}} == hello "
@@ -49,7 +64,7 @@ def test_conditional_result_tasks_dag():
             dag_template.dag.tasks[1].when == " {{inputs.parameters.command}} == goodbye "
     ), "dag does not reference task"
     assert (
-            (re.search("tasks[''say\-hello\-*''].outputs != nil  ? tasks[''say\-hello\-*''].outputs.result:", dag_template.outputs.parameters[0].value_from.expression)
+            (re.search("tasks[''say\-hello\-*''].outputs != nil  ? tasks[''say\-hello\-*''].outputs.parameters.result:", dag_template.outputs.parameters[0].value_from.expression)
     ), "dag does not merge conditional results")
 
 

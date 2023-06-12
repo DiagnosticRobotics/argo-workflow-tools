@@ -11,6 +11,6 @@ def merge_conditional_results(*args) -> InputDefinition:
     else:
         values = ""
         for arg in args:
-            values += f"tasks['{arg.source_node_id}'].outputs != nil  ? tasks['{arg.source_node_id}'].outputs.result :  "
+            values += f"tasks['{arg.source_node_id}'].outputs != nil  ? tasks['{arg.source_node_id}'].outputs.parameters.result :  "
         values += "nil"
         return InputDefinition(name="merge_result", source_type=SourceType.NODE_OUTPUT, value=values, is_expression=True)
