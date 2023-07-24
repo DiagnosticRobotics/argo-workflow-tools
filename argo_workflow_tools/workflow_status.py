@@ -1,17 +1,19 @@
 from enum import Enum
 
 
-class WorkflowStatus(Enum):
+class WorkflowStatus(str, Enum):
+    Unknown = "Unknown"
+    Pending = "Pending"
     Running = "Running"
     Succeeded = "Succeeded"
     Failed = "Failed"
+    Error = "Error"
     Canceled = "Canceled"
     Suspended = "Suspended"
 
     @classmethod
     def value_of(cls, value):
-        for k, v in cls.__members__.items():
-            if k == value:
-                return v
-        else:
-            raise ValueError(f"'{cls.__name__}' enum not found for '{value}'")
+        if value is None or value == "":
+            return cls.Unknown
+
+        return WorkflowStatus(value)
