@@ -1,4 +1,4 @@
-name: Publish main packge
+name: Publish main package
 
 on:
   release:
@@ -7,6 +7,8 @@ on:
 
 jobs:
   deploy:
+    permissions:
+      id-token: write
 
     runs-on: ubuntu-latest
     strategy:
@@ -24,9 +26,5 @@ jobs:
         poetry install
     - name: Build package
       run: poetry build -f wheel
-    - name: Publish package
-      env:
-        PYPI_USER: ${{ secrets.PYPI_USER }}
-        PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-
-      run: poetry publish -u "$PYPI_USER" -p "$PYPI_TOKEN"
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
