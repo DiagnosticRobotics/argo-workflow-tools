@@ -1,4 +1,4 @@
-name: Publish visualization packge
+name: Publish visualization package
 
 on:
   release:
@@ -7,6 +7,8 @@ on:
 
 jobs:
   deploy:
+    permissions:
+      id-token: write
 
     runs-on: ubuntu-latest
     strategy:
@@ -28,11 +30,7 @@ jobs:
       run: |
         cd argo_workflow_tools_visualization/
         poetry build -f wheel
-    - name: Publish package
-      env:
-        PYPI_USER: ${{ secrets.PYPI_USER }}
-        PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
-
-      run: |
-        cd argo_workflow_tools_visualization/
-        poetry publish -u "$PYPI_USER" -p "$PYPI_TOKEN"
+    - name: Publish package to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: argo_workflow_tools_visualization/dist/
