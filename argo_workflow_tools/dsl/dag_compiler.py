@@ -485,8 +485,8 @@ def _build_dag_template(node: DAGNode, embed_workflow_templates: bool) -> argo.T
     return dag_template
 
 
-def compile_dag_into_workflow(entrypoint: DAGNode, on_exit: DAGNode = None,
-                              embed_workflow_templates: bool = False) -> argo.WorkflowSpec:
+def compile_dag(entrypoint: DAGNode, on_exit: DAGNode = None,
+                embed_workflow_templates: bool = False) -> argo.WorkflowSpec:
     """
     compiles a DAG annotated function into a WorkflowSpec arg model
     Parameters
@@ -508,16 +508,16 @@ def compile_dag_into_workflow(entrypoint: DAGNode, on_exit: DAGNode = None,
             )
         result = _build_dag_template(entrypoint, embed_workflow_templates)
 
-        hooks = {}
         if on_exit:
             on_exit_result = _build_dag_template(on_exit, embed_workflow_templates).name
-            hooks = {'exit': argo.LifecycleHook(arguments=result.inputs, template=on_exit_result)}
+        else:
+            on_exit_result = None
 
         workflow_templates = workflow_template_collector.collect_templates()
         workflowspec = argo.WorkflowSpec(
             templates=workflow_templates,
             entrypoint=result.name,
-            hooks=hooks,
+            onExit=on_exit_result,
         )
 
         return workflowspec

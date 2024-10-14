@@ -2,7 +2,7 @@ from typing import Callable, Any
 from typing import Dict, List, Union
 import yaml
 
-from argo_workflow_tools.dsl.dag_compiler import compile_dag_into_workflow
+from argo_workflow_tools.dsl.dag_compiler import compile_dag
 from argo_workflow_tools.dsl.utils.utils import (
     delete_none,
     get_arguments,
@@ -51,7 +51,7 @@ class WorkflowTemplate:
         """
         convert workflow to pydantic model
         """
-        spec = compile_dag_into_workflow(self.entrypoint, self.on_exit, embed_workflow_templates)
+        spec = compile_dag(self.entrypoint, self.on_exit, embed_workflow_templates)
         spec.arguments = get_arguments(self.arguments)
 
         return argo.WorkflowTemplate(
@@ -66,7 +66,9 @@ class WorkflowTemplate:
             spec=argo.WorkflowSpec(
                 templates=spec.templates,
                 entrypoint=spec.entrypoint,
-                on_exit=spec.on_exit,
+                hooks={
+                    'exit': LifecycleHook(arguments=spec.arguments, template=spec.on_exit)
+                } if spec.on_exit is not None else {},
                 arguments=spec.arguments,
                 workflowMetadata=k8s_v1.ObjectMeta(labels=self.workflow_labels, annotations=self.workflow_annotations)
             )
@@ -131,7 +133,7 @@ class CronWorkflow:
         """
         convert workflow to pydantic model
         """
-        wf_spec = compile_dag_into_workflow(self.entrypoint, self.on_exit, embed_workflow_templates)
+        wf_spec = compile_dag(self.entrypoint, self.on_exit, embed_workflow_templates)
         wf_spec.arguments = get_arguments(self.arguments)
         spec = argo.CronWorkflowSpec(
             workflowSpec=wf_spec,
@@ -195,9 +197,8 @@ class Workflow:
             raise ValueError(
                 "you must specify at least name or generated name arguments for a workflow"
             )
-        spec = compile_dag_into_workflow(self.entrypoint, self.on_exit, embed_workflow_templates)
+        spec = compile_dag(self.entrypoint, self.on_exit, embed_workflow_templates)
         spec.arguments = get_arguments(self.arguments)
-
         workflow = argo.Workflow(
             apiVersion="argoproj.io/v1alpha1",
             kind="Workflow",
@@ -208,14 +209,7 @@ class Workflow:
                 labels=self.labels,
                 annotations=self.annotations,
             ),
-            spec=argo.WorkflowSpec(
-                templates=spec.templates,
-                entrypoint=spec.entrypoint,
-                hooks={
-                    'exit': LifecycleHook(arguments=spec.arguments, template=spec.hooks['exit'].template)
-                } if 'exit' in spec.hooks else {},
-                arguments=spec.arguments,
-            ),
+            spec=spec,
         )
         return workflow
 
