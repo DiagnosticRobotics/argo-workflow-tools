@@ -1,4 +1,4 @@
-from argo_workflow_tools import dsl, Workflow, WorkflowTemplate
+from argo_workflow_tools import dsl, WorkflowTemplate
 
 
 def test_on_exit_dag():
