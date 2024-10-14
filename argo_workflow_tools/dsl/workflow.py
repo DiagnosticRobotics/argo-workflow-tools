@@ -9,7 +9,6 @@ from argo_workflow_tools.dsl.utils.utils import (
     sanitize_name,
 )
 from argo_workflow_tools.models.io.argoproj.workflow import v1alpha1 as argo
-from argo_workflow_tools.models.io.argoproj.workflow.v1alpha1 import LifecycleHook
 from argo_workflow_tools.models.io.k8s.apimachinery.pkg.apis.meta import v1 as k8s_v1
 
 
@@ -63,12 +62,10 @@ class WorkflowTemplate:
                 labels=self.labels,
                 annotations=self.annotations,
             ),
-            spec=argo.WorkflowSpec(
+            spec=argo.WorkflowTemplateSpec(
                 templates=spec.templates,
                 entrypoint=spec.entrypoint,
-                hooks={
-                    'exit': LifecycleHook(arguments=spec.arguments, template=spec.on_exit)
-                } if spec.on_exit is not None else {},
+                onExit=spec.on_exit,
                 arguments=spec.arguments,
                 workflowMetadata=k8s_v1.ObjectMeta(labels=self.workflow_labels, annotations=self.workflow_annotations)
             )

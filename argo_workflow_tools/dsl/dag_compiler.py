@@ -244,7 +244,7 @@ def _build_exit_hook(exit_hook: Callable, embed_workflow_templates: bool) -> Dic
 def _build_dag_task(
         dag_task: NodeReference, unique_node_names_map: Dict[str, str],
         embed_workflow_templates: bool
-) -> argo.DAGTask:
+) -> argo.DagTask:
     potential_deps = list(dag_task.arguments.values())
     potential_deps.extend(list() if dag_task.wait_for is None else dag_task.wait_for)
     dependencies = set(
@@ -269,7 +269,7 @@ def _build_dag_task(
     if isinstance(dag_task, DAGReference) or \
             (isinstance(dag_task, WorkflowTemplateReference) and embed_workflow_templates):
         dag = _build_dag_template(dag_task.node, embed_workflow_templates)
-        task = argo.DAGTask(
+        task = argo.DagTask(
             name=dag_task.id,
             template=dag.name,
             arguments=get_arguments(list(arguments)),
@@ -283,7 +283,7 @@ def _build_dag_task(
     elif isinstance(dag_task, TaskReference):
         task_template = _build_task_template(dag_task)
 
-        task = argo.DAGTask(
+        task = argo.DagTask(
             name=dag_task.id,
             template=task_template.name,
             dependencies=list(dependencies),
@@ -296,7 +296,7 @@ def _build_dag_task(
         return task
     elif isinstance(dag_task, WorkflowTemplateReference):
         template_name = generate_template_name_from_func(dag_task.func)
-        task = argo.DAGTask(
+        task = argo.DagTask(
             name=dag_task.id,
             templateRef=argo.TemplateRef(
                 name=dag_task.workflow_template_name, template=template_name
@@ -473,7 +473,7 @@ def _build_dag_template(node: DAGNode, embed_workflow_templates: bool) -> argo.T
     tasks = [_build_dag_task(dag_task, unique_node_names_map, embed_workflow_templates) for dag_task in dag_tasks]
 
     dag_template = argo.Template(
-        dag=argo.DAGTemplate(tasks=list(tasks)),
+        dag=argo.DagTemplate(tasks=list(tasks)),
         name=generate_template_name_from_func(node.func),
         outputs=get_outputs(dag_outputs),
         inputs=get_inputs(dag_inputs),
