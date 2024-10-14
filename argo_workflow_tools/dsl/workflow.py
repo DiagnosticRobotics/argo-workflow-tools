@@ -66,9 +66,7 @@ class WorkflowTemplate:
             spec=argo.WorkflowSpec(
                 templates=spec.templates,
                 entrypoint=spec.entrypoint,
-                hooks={
-                    'exit': LifecycleHook(arguments=spec.arguments, template=spec.hooks['exit'].template)
-                } if 'exit' in spec.hooks else {},
+                on_exit=spec.on_exit,
                 arguments=spec.arguments,
                 workflowMetadata=k8s_v1.ObjectMeta(labels=self.workflow_labels, annotations=self.workflow_annotations)
             )
