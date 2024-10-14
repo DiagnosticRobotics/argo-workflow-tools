@@ -62,7 +62,7 @@ class WorkflowTemplate:
                 labels=self.labels,
                 annotations=self.annotations,
             ),
-            spec=argo.WorkflowTemplateSpec(
+            spec=argo.WorkflowSpec(
                 templates=spec.templates,
                 entrypoint=spec.entrypoint,
                 onExit=spec.on_exit,
